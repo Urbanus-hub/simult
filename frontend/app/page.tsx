@@ -17,8 +17,9 @@ import {
 } from "react-icons/hi2";
 import { FaGithub, FaTwitter, FaLinkedin } from "react-icons/fa";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "@/components/Button";
+import Antigravity from "@/components/Antigravity";
 
 // Minimal components replacing the complex Glass ones
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
@@ -45,15 +46,21 @@ const StepCard = ({ number, title, description }: { number: string, title: strin
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Initialize theme based on system preference
-  useState(() => {
+  useEffect(() => {
+    setMounted(true);
     if (typeof window !== 'undefined') {
       const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setIsDark(systemDark);
-      // Optional: Check if user previously saved a preference (not implemented here for simplicity)
+      
+      const root = document.documentElement;
+      if (systemDark) {
+        root.classList.add('dark');
+      }
     }
-  });
+  }, []);
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -68,6 +75,8 @@ export default function LandingPage() {
       root.classList.add('light');
     }
   };
+
+  if (!mounted) return null; // Or render a skeleton/default state to avoid mismatch
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden selection:bg-primary/10">
@@ -120,7 +129,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, height: "auto" }}
             className="md:hidden border-t border-border bg-background px-6 py-4 space-y-4"
           >
-            <Link href="#features" className="block text-muted-foreground hover:text-primary">Features</Link>
+             <Link href="#features" className="block text-muted-foreground hover:text-primary">Features</Link>
             <Link href="#how-it-works" className="block text-muted-foreground hover:text-primary">How it works</Link>
             <Link href="#pricing" className="block text-muted-foreground hover:text-primary">Pricing</Link>
             <button 
@@ -138,13 +147,37 @@ export default function LandingPage() {
         )}
       </nav>
 
-      <main className="pt-32 pb-16 px-6">
+      <main className="pt-32 pb-16 px-6 relative z-10">
+        {/* Hero Background - Absolute within Main, scrolls with page */}
+        <div className="absolute top-0 left-0 w-full h-[100vh] -mt-32 overflow-hidden -z-10 pointer-events-none flex justify-center">
+            <div className="w-full h-full opacity-40 dark:opacity-30">
+                <Antigravity
+                    count={400}
+                    magnetRadius={15}
+                    ringRadius={15}
+                    waveSpeed={0.4}
+                    waveAmplitude={1}
+                    particleSize={2.5}
+                    lerpSpeed={0.1}
+                    color={"#64748b"} 
+                    autoAnimate={false}
+                    particleVariance={1}
+                    rotationSpeed={0}
+                    depthFactor={1}
+                    pulseSpeed={3}
+                    particleShape="capsule"
+                    fieldStrength={10}
+                />
+            </div>
+        </div>
+
         {/* Hero Section */}
-        <section className="max-w-4xl mx-auto text-center mb-32">
+        <section className="max-w-4xl mx-auto text-center mb-32 relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="relative z-10" 
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/50 text-secondary-foreground text-sm font-medium mb-8">
               <span className="flex w-2 h-2 rounded-full bg-primary/60"></span>

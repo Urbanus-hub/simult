@@ -3,7 +3,10 @@ import mongoose from "mongoose";
 export const connectDB = async (): Promise<void> => {
   try {
     const mongoURI =
-      process.env.MONGODB_URI || "mongodb://localhost:27017/simult";
+      process.env.MONGODB_URI;
+    if (!mongoURI) {
+      throw new Error("Please provide a MongoDB URI");
+    }
 
     await mongoose.connect(mongoURI);
 
