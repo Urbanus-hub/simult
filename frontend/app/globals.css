@@ -41,12 +41,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark Mode - Slate 900/950 base */
-    --background: #020617; /* slate-950 */
+    /* Dark Mode - Slightly Lighter (Slate 900 base) */
+    --background: #0f172a; /* slate-900 */
     --foreground: #f8fafc; /* slate-50 */
     
     --primary: #f8fafc; /* slate-50 */
-    --primary-foreground: #020617; /* slate-950 */
+    --primary-foreground: #0f172a; /* slate-900 */
     
     --secondary: #1e293b; /* slate-800 */
     --secondary-foreground: #f8fafc;
@@ -54,14 +54,48 @@
     --accent: #334155; /* slate-700 */
     --accent-foreground: #f8fafc;
     
-    --muted: #0f172a; /* slate-900 */
+    --muted: #1e293b; /* slate-800 */
     --muted-foreground: #94a3b8; /* slate-400 */
     
-    --card: #0f172a; /* slate-900 */
+    --card: #1e293b; /* slate-800 */
     --card-foreground: #f8fafc;
     
-    --border: #1e293b; /* slate-800 */
+    --border: #334155; /* slate-700 */
   }
+}
+
+/* Manual Dark Mode Override */
+:root.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --primary: #f8fafc;
+  --primary-foreground: #0f172a;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --accent: #334155;
+  --accent-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --border: #334155;
+}
+
+/* Manual Light Mode Override */
+:root.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #0f172a;
+  --primary-foreground: #f8fafc;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --accent: #cbd5e1;
+  --accent-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
 }
 
 body {
@@ -70,4 +104,5 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }

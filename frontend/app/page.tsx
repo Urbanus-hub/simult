@@ -11,7 +11,9 @@ import {
   HiChatBubbleLeftRight,
   HiUserGroup,
   HiShieldCheck,
-  HiGlobeAlt
+  HiGlobeAlt,
+  HiMoon,
+  HiSun
 } from "react-icons/hi2";
 import { FaGithub, FaTwitter, FaLinkedin } from "react-icons/fa";
 import Link from "next/link";
@@ -34,7 +36,7 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, titl
 
 const StepCard = ({ number, title, description }: { number: string, title: string, description: string }) => (
   <div className="relative p-6">
-    <div className="text-6xl font-black text-secondary/30 mb-4">{number}</div>
+    <div className="text-6xl font-black text-primary/10 mb-4">{number}</div>
     <h3 className="text-xl font-bold mb-3 text-primary">{title}</h3>
     <p className="text-muted-foreground leading-relaxed">{description}</p>
   </div>
@@ -42,6 +44,30 @@ const StepCard = ({ number, title, description }: { number: string, title: strin
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  // Initialize theme based on system preference
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDark(systemDark);
+      // Optional: Check if user previously saved a preference (not implemented here for simplicity)
+    }
+  });
+
+  const toggleTheme = () => {
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    const root = document.documentElement;
+    
+    if (newTheme) {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans overflow-x-hidden selection:bg-primary/10">
@@ -65,6 +91,13 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Toggle theme"
+            >
+              {isDark ? <HiSun className="w-5 h-5" /> : <HiMoon className="w-5 h-5" />}
+            </button>
             <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Log in
             </Link>
@@ -90,6 +123,13 @@ export default function LandingPage() {
             <Link href="#features" className="block text-muted-foreground hover:text-primary">Features</Link>
             <Link href="#how-it-works" className="block text-muted-foreground hover:text-primary">How it works</Link>
             <Link href="#pricing" className="block text-muted-foreground hover:text-primary">Pricing</Link>
+            <button 
+              onClick={toggleTheme}
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary w-full py-2"
+            >
+              {isDark ? <HiSun className="w-5 h-5" /> : <HiMoon className="w-5 h-5" />}
+              <span>{isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}</span>
+            </button>
             <div className="pt-4 flex flex-col gap-3">
               <Button variant="secondary" href="/login" className="w-full justify-center">Log in</Button>
               <Button variant="primary" href="/register" className="w-full justify-center">Get Started</Button>
