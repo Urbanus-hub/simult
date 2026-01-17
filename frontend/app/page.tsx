@@ -6,7 +6,6 @@ import {
   HiXMark, 
   HiCheck, 
   HiPlay, 
-  HiArrowRight,
   HiBolt,
   HiChatBubbleLeftRight,
   HiUserGroup,
@@ -21,9 +20,31 @@ import { useState, useEffect } from "react";
 import Button from "@/components/Button";
 import Antigravity from "@/components/Antigravity";
 
+
+// Animation Variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5 }
+  }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
 // Minimal components replacing the complex Glass ones
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
   <motion.div 
+    variants={fadeInUp}
     whileHover={{ y: -5 }}
     className="p-6 rounded-2xl bg-card border border-border hover:shadow-lg transition-all duration-300"
   >
@@ -36,11 +57,14 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, titl
 );
 
 const StepCard = ({ number, title, description }: { number: string, title: string, description: string }) => (
-  <div className="relative p-6">
+  <motion.div 
+    variants={fadeInUp}
+    className="relative p-6"
+  >
     <div className="text-6xl font-black text-primary/10 mb-4">{number}</div>
     <h3 className="text-xl font-bold mb-3 text-primary">{title}</h3>
     <p className="text-muted-foreground leading-relaxed">{description}</p>
-  </div>
+  </motion.div>
 );
 
 export default function LandingPage() {
@@ -215,7 +239,13 @@ export default function LandingPage() {
         </section>
 
         {/* Social Proof */}
-        <section className="max-w-7xl mx-auto mb-32 border-y border-border py-12">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInUp}
+          className="max-w-7xl mx-auto mb-32 border-y border-border py-12"
+        >
           <p className="text-center text-sm font-semibold text-muted-foreground mb-8 tracking-wide uppercase">Trusted by forward-thinking teams</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center justify-items-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
              {/* Placeholders for logos - implementing as text for now */}
@@ -224,18 +254,30 @@ export default function LandingPage() {
              <div className="text-xl font-bold text-primary">Nebula</div>
              <div className="text-xl font-bold text-primary">Vertex</div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Features Grid */}
         <section id="features" className="max-w-7xl mx-auto mb-32">
-          <div className="text-center mb-16">
+          <motion.div 
+             initial="hidden"
+             whileInView="visible"
+             viewport={{ once: true, margin: "-100px" }}
+             variants={fadeInUp}
+             className="text-center mb-16"
+          >
             <h2 className="text-3xl font-bold text-primary mb-4">Everything you need</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Powerful features that keep your team in sync, wrapped in a clean interface.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             <FeatureCard 
               icon={<HiChatBubbleLeftRight className="w-6 h-6" />}
               title="Real-time Messaging"
@@ -266,12 +308,22 @@ export default function LandingPage() {
               title="Task Management"
               description="Simple to-do lists that sync with your conversations. Keep track of what matters."
             />
-          </div>
+          </motion.div>
         </section>
 
         {/* How It Works */}
-        <section id="how-it-works" className="max-w-7xl mx-auto mb-32 bg-secondary/30 rounded-3xl p-8 md:p-16">
-          <div className="grid md:grid-cols-3 gap-12">
+        <motion.section 
+          id="how-it-works" 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInUp}
+          className="max-w-7xl mx-auto mb-32 bg-secondary/30 rounded-3xl p-8 md:p-16"
+        >
+          <motion.div 
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-12"
+          >
              <StepCard 
                number="01"
                title="Create a Room"
@@ -287,19 +339,35 @@ export default function LandingPage() {
                title="Start Collaborating"
                description="Chat, share files, and manage tasks together in real-time."
              />
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Pricing */}
         <section id="pricing" className="max-w-7xl mx-auto mb-32">
-          <div className="text-center mb-16">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
+            className="text-center mb-16"
+          >
             <h2 className="text-3xl font-bold text-primary mb-4">Simple Pricing</h2>
             <p className="text-muted-foreground">Start for free, upgrade when you grow.</p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+          >
             {/* Free Tier */}
-            <div className="p-8 rounded-2xl border border-border bg-card">
+            <motion.div 
+              variants={fadeInUp}
+              whileHover={{ y: -8 }}
+              className="p-8 rounded-2xl border border-border bg-card transition-all duration-300 hover:shadow-xl"
+            >
               <h3 className="text-lg font-semibold text-primary mb-2">Starter</h3>
               <div className="text-4xl font-bold text-primary mb-6">$0</div>
               <ul className="space-y-4 mb-8">
@@ -314,10 +382,14 @@ export default function LandingPage() {
                 </li>
               </ul>
               <Button variant="secondary" className="w-full justify-center" href="/register">Start Free</Button>
-            </div>
+            </motion.div>
 
             {/* Pro Tier */}
-            <div className="p-8 rounded-2xl border-2 border-primary bg-card relative shadow-2xl">
+            <motion.div 
+              variants={fadeInUp}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="p-8 rounded-2xl border-2 border-primary bg-card relative shadow-2xl transition-all duration-300"
+            >
               <div className="absolute top-0 right-0 -mt-4 mr-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
                 Popular
               </div>
@@ -338,10 +410,14 @@ export default function LandingPage() {
                 </li>
               </ul>
               <Button variant="primary" className="w-full justify-center" href="/register">Get Pro</Button>
-            </div>
+            </motion.div>
 
              {/* Enterprise Tier */}
-             <div className="p-8 rounded-2xl border border-border bg-card">
+             <motion.div 
+               variants={fadeInUp}
+               whileHover={{ y: -8 }}
+               className="p-8 rounded-2xl border border-border bg-card transition-all duration-300 hover:shadow-xl"
+             >
               <h3 className="text-lg font-semibold text-primary mb-2">Enterprise</h3>
               <div className="text-4xl font-bold text-primary mb-6">Custom</div>
               <ul className="space-y-4 mb-8">
@@ -356,18 +432,24 @@ export default function LandingPage() {
                 </li>
               </ul>
               <Button variant="secondary" className="w-full justify-center" href="/contact">Contact Sales</Button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* CTA */}
-        <section className="max-w-4xl mx-auto text-center py-20 bg-primary/5 rounded-3xl">
+        <motion.section 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInUp}
+          className="max-w-4xl mx-auto text-center py-20 bg-primary/5 rounded-3xl"
+        >
           <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">Ready to work better together?</h2>
           <p className="text-lg text-muted-foreground mb-8">Join the thousands of teams using Simult to power their daily collaboration.</p>
           <div className="flex justify-center gap-4">
              <Button variant="primary" size="lg" href="/register">Get Started Now</Button>
           </div>
-        </section>
+        </motion.section>
       </main>
 
       {/* Footer */}
