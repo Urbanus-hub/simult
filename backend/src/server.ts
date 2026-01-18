@@ -1,86 +1,53 @@
 import express from "express";
-import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
-import dotenv from "dotenv";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
 import { connectDB } from "./config/database";
 import { errorHandler } from "./middleware/errorHandler";
-
-// Load environment variables
-dotenv.config();
+import { setupSocketIO } from "./sockets";
+import { logger } from "./utils/logger";
+import env from "./config/env";
+import authRoutes from "./routes/auth";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3001",
-    credentials: true,
-  })
-);
-
-// Create HTTP server
 const server = http.createServer(app);
-
-// Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3001",
-    methods: ["GET", "POST"],
+    origin: env.FRONTEND_URL,
     credentials: true,
   },
 });
 
-// Socket.IO connection handler
-io.on("connection", (socket) => {
-  console.log("✅ User connected - Socket ID:", socket.id);
-
-  socket.emit("welcome", "Welcome to Simult!");
-
-  socket.on("message", (message) => {
-    console.log(`📩 Received message from ${socket.id}: ${message}`);
-    io.emit("newMessage", message);
-  });
-
-  socket.on("disconnect", (reason) => {
-    console.log("❌ User disconnected - Socket ID:", socket.id);
-    console.log("   Reason:", reason);
-  });
-});
+// Middleware
+app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+app.use(helmet()); // Security headers
+app.use(morgan("dev")); // Logging and monitoring
+app.use(express.json()); // JSON parsing
+app.use(express.urlencoded({ extended: true })); // URL-encoded parsing
 
 // Routes
-app.get("/", (req, res) => {
-  res.json({
-    message: "Simult API Server",
-    version: "1.0.0",
-    status: "running",
-  });
+app.get("/api/status", (req, res) => {
+  res.json({ status: "API is running" });
 });
 
-app.get("/health", (req, res) => {
-  res.json({ status: "healthy", timestamp: new Date().toISOString() });
-});
+// Auth routes
+app.use("/api/auth", authRoutes);
 
-// Error handler (must be last)
+// Socket.IO setup
+setupSocketIO(io);
+
+// Error handling
 app.use(errorHandler);
 
-// Connect to database and start server
+// Database connection and server start
 const startServer = async () => {
-  try {
-    await connectDB();
+  await connectDB();
 
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📡 WebSocket ready on ws://localhost:${PORT}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
-    });
-  } catch (error) {
-    console.error("❌ Failed to start server:", error);
-    process.exit(1);
-  }
+  server.listen(env.PORT, () => {
+    logger.info(`Server running at http://localhost:${env.PORT}`);
+  });
 };
 
 startServer();
