@@ -10,6 +10,10 @@ import { setupSocketIO } from "./sockets";
 import { logger } from "./utils/logger";
 import env from "./config/env";
 import authRoutes from "./routes/auth.routes";
+import roomRoutes from "./routes/room.routes";
+import taskRoutes from "./routes/task.routes";
+import messageRoutes from "./routes/message.routes";
+import invitationRoutes from "./routes/invitation.routes";
 
 const app = express();
 const server = http.createServer(app);
@@ -32,8 +36,12 @@ app.get("/api/status", (req, res) => {
   res.json({ status: "API is running" });
 });
 
-// Auth routes
-app.use("/api", authRoutes);
+// API routes
+app.use("/api/auth", authRoutes);
+app.use("/api/rooms", roomRoutes);
+app.use("/api", taskRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/invitations", invitationRoutes);
 
 // Socket.IO setup
 setupSocketIO(io);
@@ -47,7 +55,11 @@ const startServer = async () => {
 
   server.listen(env.PORT, () => {
     logger.info(`Server running at http://localhost:${env.PORT}`);
+    logger.info(`Environment: ${env.NODE_ENV}`);
   });
 };
 
 startServer();
+
+// Export io for use in other modules if needed
+export { io };
