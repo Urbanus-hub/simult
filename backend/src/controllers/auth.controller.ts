@@ -23,10 +23,8 @@ interface LoginBody {
 
 // Generate JWT Token
 const generateToken = (userId: string): string => {
-  const options: SignOptions = {
-    expiresIn: env.JWT_EXPIRE || "7d",
-  };
-  return jwt.sign({ id: userId }, env.JWT_SECRET as string, options);
+  
+  return jwt.sign({ id: userId }, env.JWT_SECRET as string, {expiresIn: env.JWT_EXPIRE} as SignOptions);
 };
 
 // REGISTER
@@ -146,6 +144,7 @@ const getProfile = async (
 
     if (!user) {
       throw new AppError("User not found", 404);
+   
     }
 
     res.status(200).json({

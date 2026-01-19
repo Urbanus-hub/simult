@@ -9,7 +9,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { setupSocketIO } from "./sockets";
 import { logger } from "./utils/logger";
 import env from "./config/env";
-import authRoutes from "./routes/auth";
+import authRoutes from "./routes/auth.routes";
 
 const app = express();
 const server = http.createServer(app);
@@ -33,7 +33,7 @@ app.get("/api/status", (req, res) => {
 });
 
 // Auth routes
-app.use("/api/auth", authRoutes);
+app.use("/api", authRoutes);
 
 // Socket.IO setup
 setupSocketIO(io);

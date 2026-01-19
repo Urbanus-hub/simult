@@ -19,7 +19,7 @@ export const authenticate = (
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      throw new AppError("No token provided", 401);
+      throw new AppError("Not authorized no token provided", 401);
     }
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string };
