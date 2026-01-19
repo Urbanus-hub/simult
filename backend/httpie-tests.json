@@ -1,0 +1,530 @@
+{
+  "description": "Simult API Test Collection for HTTPie",
+  "baseUrl": "http://localhost:5000/api",
+  "notes": "Replace {{token}}, {{roomId}}, {{taskId}}, {{messageId}}, {{userId}} with actual values",
+
+  "authentication": {
+    "register": {
+      "method": "POST",
+      "endpoint": "/user/register",
+      "command": "http POST :5000/api/user/register email=testuser@example.com password=Test123456 username=testuser firstName=Test lastName=User",
+      "data": {
+        "email": "testuser@example.com",
+        "password": "Test123456",
+        "username": "testuser",
+        "firstName": "Test",
+        "lastName": "User"
+      }
+    },
+    "login": {
+      "method": "POST",
+      "endpoint": "/user/login",
+      "command": "http POST :5000/api/user/login email=testuser@example.com password=Test123456",
+      "data": {
+        "email": "testuser@example.com",
+        "password": "Test123456"
+      }
+    },
+    "logout": {
+      "method": "POST",
+      "endpoint": "/user/logout",
+      "command": "http POST :5000/api/user/logout 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "getProfile": {
+      "method": "GET",
+      "endpoint": "/user/profile",
+      "command": "http GET :5000/api/user/profile 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "updateProfile": {
+      "method": "PUT",
+      "endpoint": "/user/profile",
+      "command": "http PUT :5000/api/user/profile 'Authorization:Bearer {{token}}' firstName=Updated lastName=Name bio='Software Developer'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "firstName": "Updated",
+        "lastName": "Name",
+        "bio": "Software Developer",
+        "avatar": "https://example.com/avatar.jpg"
+      }
+    },
+    "deleteAccount": {
+      "method": "DELETE",
+      "endpoint": "/user/delete",
+      "command": "http DELETE :5000/api/user/delete 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    }
+  },
+
+  "rooms": {
+    "createRoom": {
+      "method": "POST",
+      "endpoint": "/rooms",
+      "command": "http POST :5000/api/rooms 'Authorization:Bearer {{token}}' name='Project Alpha' description='Main project room' isPrivate:=false",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "name": "Project Alpha",
+        "description": "Main project room",
+        "isPrivate": false
+      }
+    },
+    "getUserRooms": {
+      "method": "GET",
+      "endpoint": "/rooms",
+      "command": "http GET :5000/api/rooms 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "getRoomById": {
+      "method": "GET",
+      "endpoint": "/rooms/:id",
+      "command": "http GET :5000/api/rooms/{{roomId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "updateRoom": {
+      "method": "PUT",
+      "endpoint": "/rooms/:id",
+      "command": "http PUT :5000/api/rooms/{{roomId}} 'Authorization:Bearer {{token}}' name='Updated Room Name' description='New description'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "name": "Updated Room Name",
+        "description": "New description",
+        "isPrivate": true
+      }
+    },
+    "deleteRoom": {
+      "method": "DELETE",
+      "endpoint": "/rooms/:id",
+      "command": "http DELETE :5000/api/rooms/{{roomId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "leaveRoom": {
+      "method": "POST",
+      "endpoint": "/rooms/:id/leave",
+      "command": "http POST :5000/api/rooms/{{roomId}}/leave 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "addMember": {
+      "method": "POST",
+      "endpoint": "/rooms/:id/members",
+      "command": "http POST :5000/api/rooms/{{roomId}}/members 'Authorization:Bearer {{token}}' userId={{userId}} role=member",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "userId": "{{userId}}",
+        "role": "member"
+      }
+    },
+    "removeMember": {
+      "method": "DELETE",
+      "endpoint": "/rooms/:id/members/:userId",
+      "command": "http DELETE :5000/api/rooms/{{roomId}}/members/{{userId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "transferOwnership": {
+      "method": "PUT",
+      "endpoint": "/rooms/:id/transfer-ownership",
+      "command": "http PUT :5000/api/rooms/{{roomId}}/transfer-ownership 'Authorization:Bearer {{token}}' newOwnerId={{userId}}",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "newOwnerId": "{{userId}}"
+      }
+    },
+    "getRoomMembers": {
+      "method": "GET",
+      "endpoint": "/rooms/:id/members",
+      "command": "http GET :5000/api/rooms/{{roomId}}/members 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    }
+  },
+
+  "tasks": {
+    "createTask": {
+      "method": "POST",
+      "endpoint": "/rooms/:roomId/tasks",
+      "command": "http POST :5000/api/rooms/{{roomId}}/tasks 'Authorization:Bearer {{token}}' title='Implement Authentication' description='Add JWT auth' priority=high status=open dueDate=2026-02-01T12:00:00Z",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "title": "Implement Authentication",
+        "description": "Add JWT authentication to the API",
+        "priority": "high",
+        "status": "open",
+        "dueDate": "2026-02-01T12:00:00Z",
+        "tags": ["backend", "security"],
+        "checklist": [
+          { "text": "Install JWT library", "completed": false },
+          { "text": "Create auth middleware", "completed": false }
+        ]
+      }
+    },
+    "getRoomTasks": {
+      "method": "GET",
+      "endpoint": "/rooms/:roomId/tasks",
+      "command": "http GET :5000/api/rooms/{{roomId}}/tasks 'Authorization:Bearer {{token}}' status==open priority==high",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "queryParams": {
+        "status": "open",
+        "priority": "high",
+        "assignedTo": "{{userId}}"
+      }
+    },
+    "getTaskById": {
+      "method": "GET",
+      "endpoint": "/tasks/:id",
+      "command": "http GET :5000/api/tasks/{{taskId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "updateTask": {
+      "method": "PUT",
+      "endpoint": "/tasks/:id",
+      "command": "http PUT :5000/api/tasks/{{taskId}} 'Authorization:Bearer {{token}}' title='Updated Task Title' status=in-progress priority=medium",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "title": "Updated Task Title",
+        "description": "Updated description",
+        "status": "in-progress",
+        "priority": "medium"
+      }
+    },
+    "deleteTask": {
+      "method": "DELETE",
+      "endpoint": "/tasks/:id",
+      "command": "http DELETE :5000/api/tasks/{{taskId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "claimTask": {
+      "method": "POST",
+      "endpoint": "/tasks/:id/claim",
+      "command": "http POST :5000/api/tasks/{{taskId}}/claim 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "unclaimTask": {
+      "method": "POST",
+      "endpoint": "/tasks/:id/unclaim",
+      "command": "http POST :5000/api/tasks/{{taskId}}/unclaim 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "addComment": {
+      "method": "POST",
+      "endpoint": "/tasks/:id/comments",
+      "command": "http POST :5000/api/tasks/{{taskId}}/comments 'Authorization:Bearer {{token}}' text='This looks good!'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "text": "This looks good!"
+      }
+    },
+    "updateChecklist": {
+      "method": "PUT",
+      "endpoint": "/tasks/:id/checklist",
+      "command": "http PUT :5000/api/tasks/{{taskId}}/checklist 'Authorization:Bearer {{token}}' checklist:='[{\"text\":\"Step 1\",\"completed\":true},{\"text\":\"Step 2\",\"completed\":false}]'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "checklist": [
+          { "text": "Step 1", "completed": true },
+          { "text": "Step 2", "completed": false }
+        ]
+      }
+    },
+    "addWatcher": {
+      "method": "POST",
+      "endpoint": "/tasks/:id/watch",
+      "command": "http POST :5000/api/tasks/{{taskId}}/watch 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "removeWatcher": {
+      "method": "DELETE",
+      "endpoint": "/tasks/:id/watch",
+      "command": "http DELETE :5000/api/tasks/{{taskId}}/watch 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    }
+  },
+
+  "messages": {
+    "getRoomMessages": {
+      "method": "GET",
+      "endpoint": "/messages/rooms/:roomId/messages",
+      "command": "http GET :5000/api/messages/rooms/{{roomId}}/messages 'Authorization:Bearer {{token}}' limit==50 before==2026-01-19T12:00:00Z",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "queryParams": {
+        "limit": 50,
+        "before": "2026-01-19T12:00:00Z"
+      }
+    },
+    "sendRoomMessage": {
+      "method": "POST",
+      "endpoint": "/messages/rooms/:roomId/messages",
+      "command": "http POST :5000/api/messages/rooms/{{roomId}}/messages 'Authorization:Bearer {{token}}' content='Hello everyone!' type=text",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "content": "Hello everyone!",
+        "type": "text",
+        "metadata": {
+          "mentions": []
+        }
+      }
+    },
+    "getDirectMessages": {
+      "method": "GET",
+      "endpoint": "/messages/direct/:userId",
+      "command": "http GET :5000/api/messages/direct/{{userId}} 'Authorization:Bearer {{token}}' limit==50",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "queryParams": {
+        "limit": 50,
+        "before": "2026-01-19T12:00:00Z"
+      }
+    },
+    "sendDirectMessage": {
+      "method": "POST",
+      "endpoint": "/messages/direct/:userId",
+      "command": "http POST :5000/api/messages/direct/{{userId}} 'Authorization:Bearer {{token}}' content='Hi there!' type=text",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "content": "Hi there!",
+        "type": "text"
+      }
+    },
+    "getConversations": {
+      "method": "GET",
+      "endpoint": "/messages/conversations",
+      "command": "http GET :5000/api/messages/conversations 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "editMessage": {
+      "method": "PUT",
+      "endpoint": "/messages/:id",
+      "command": "http PUT :5000/api/messages/{{messageId}} 'Authorization:Bearer {{token}}' content='Updated message content'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "content": "Updated message content"
+      }
+    },
+    "deleteMessage": {
+      "method": "DELETE",
+      "endpoint": "/messages/:id",
+      "command": "http DELETE :5000/api/messages/{{messageId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "markMessageAsRead": {
+      "method": "POST",
+      "endpoint": "/messages/:id/read",
+      "command": "http POST :5000/api/messages/{{messageId}}/read 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "addReaction": {
+      "method": "POST",
+      "endpoint": "/messages/:id/reactions",
+      "command": "http POST :5000/api/messages/{{messageId}}/reactions 'Authorization:Bearer {{token}}' emoji=👍",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "emoji": "👍"
+      }
+    },
+    "removeReaction": {
+      "method": "DELETE",
+      "endpoint": "/messages/:id/reactions",
+      "command": "http DELETE :5000/api/messages/{{messageId}}/reactions 'Authorization:Bearer {{token}}' emoji=👍",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "emoji": "👍"
+      }
+    }
+  },
+
+  "invitations": {
+    "getInvitationByToken": {
+      "method": "GET",
+      "endpoint": "/invitations/token/:token",
+      "command": "http GET :5000/api/invitations/token/{{invitationToken}}",
+      "note": "No authentication required"
+    },
+    "sendInvitation": {
+      "method": "POST",
+      "endpoint": "/invitations/send",
+      "command": "http POST :5000/api/invitations/send 'Authorization:Bearer {{token}}' email=newuser@example.com roomId={{roomId}} role=member",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "email": "newuser@example.com",
+        "roomId": "{{roomId}}",
+        "role": "member",
+        "message": "Join our collaboration room!"
+      }
+    },
+    "acceptInvitation": {
+      "method": "POST",
+      "endpoint": "/invitations/accept/:token",
+      "command": "http POST :5000/api/invitations/accept/{{invitationToken}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "declineInvitation": {
+      "method": "POST",
+      "endpoint": "/invitations/decline/:token",
+      "command": "http POST :5000/api/invitations/decline/{{invitationToken}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "getPendingInvitations": {
+      "method": "GET",
+      "endpoint": "/invitations/pending",
+      "command": "http GET :5000/api/invitations/pending 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "getSentInvitations": {
+      "method": "GET",
+      "endpoint": "/invitations/sent",
+      "command": "http GET :5000/api/invitations/sent 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "cancelInvitation": {
+      "method": "DELETE",
+      "endpoint": "/invitations/:id",
+      "command": "http DELETE :5000/api/invitations/{{invitationId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    },
+    "resendInvitation": {
+      "method": "POST",
+      "endpoint": "/invitations/:id/resend",
+      "command": "http POST :5000/api/invitations/{{invitationId}}/resend 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      }
+    }
+  },
+
+  "admin": {
+    "getStats": {
+      "method": "GET",
+      "endpoint": "/admin/stats",
+      "command": "http GET :5000/api/admin/stats 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "note": "Requires admin role"
+    },
+    "getAllUsers": {
+      "method": "GET",
+      "endpoint": "/admin/users",
+      "command": "http GET :5000/api/admin/users 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "note": "Requires admin role"
+    },
+    "deleteUser": {
+      "method": "DELETE",
+      "endpoint": "/admin/users/:id",
+      "command": "http DELETE :5000/api/admin/users/{{userId}} 'Authorization:Bearer {{token}}'",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "note": "Requires admin role"
+    },
+    "updateUserRole": {
+      "method": "PATCH",
+      "endpoint": "/admin/users/:id/role",
+      "command": "http PATCH :5000/api/admin/users/{{userId}}/role 'Authorization:Bearer {{token}}' role=moderator",
+      "headers": {
+        "Authorization": "Bearer {{token}}"
+      },
+      "data": {
+        "role": "admin"
+      },
+      "note": "Requires admin role. Allowed roles: user, moderator, admin"
+    }
+  },
+
+  "quickStartGuide": {
+    "step1": "Register a user: http POST :5000/api/user/register email=test@example.com password=Test123456 username=testuser firstName=Test lastName=User",
+    "step2": "Login and save token: http POST :5000/api/user/login email=test@example.com password=Test123456",
+    "step3": "Create a room: http POST :5000/api/rooms 'Authorization:Bearer YOUR_TOKEN' name='My Room' description='Test room'",
+    "step4": "Create a task: http POST :5000/api/rooms/ROOM_ID/tasks 'Authorization:Bearer YOUR_TOKEN' title='My Task' priority=high status=open",
+    "step5": "Send a message: http POST :5000/api/messages/rooms/ROOM_ID/messages 'Authorization:Bearer YOUR_TOKEN' content='Hello!' type=text"
+  },
+
+  "httpieExamples": {
+    "jsonData": "Use := for JSON data: http POST :5000/api/tasks/ID/checklist checklist:='[{\"text\":\"Item\",\"completed\":true}]'",
+    "booleans": "Use := for booleans: http POST :5000/api/rooms isPrivate:=true",
+    "numbers": "Use := for numbers: http GET :5000/api/messages/rooms/ID/messages limit==50",
+    "headers": "Headers use single quotes: 'Authorization:Bearer token'",
+    "queryParams": "Query params use ==: status==open priority==high"
+  }
+}
