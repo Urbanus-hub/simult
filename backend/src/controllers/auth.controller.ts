@@ -154,6 +154,7 @@ const getProfile = async (
         username: user.username,
         email: user.email,
         displayName: user.displayName,
+        role:user.role,
         avatar: user.avatar,
         bio: user.bio,
         status: user.status,
