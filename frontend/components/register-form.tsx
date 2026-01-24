@@ -51,9 +51,12 @@ export function RegisterForm({
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(formData.password)) {
-      setError("Password must include uppercase, lowercase, number and special char");
+      setError(
+        "Password must include uppercase, lowercase, number and special char",
+      );
       return;
     }
 

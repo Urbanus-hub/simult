@@ -1,102 +1,34 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import axios from "axios";
+import { toast } from "sonner";
 
-// Helper to get token from cookie
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
 
-  const token = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("token="))
-    ?.split("=")[1];
-
-  return token || null;
-}
-
-// Helper to make authenticated requests
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  const token = getToken();
-
-  const headers: Record<string, string> = {
+const APIURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+export const api = axios.create({
+  baseURL: APIURL,
+  headers: {
     "Content-Type": "application/json",
-    ...(typeof options.headers === "object" &&
-    options.headers !== null &&
-    !Array.isArray(options.headers)
-      ? (options.headers as Record<string, string>)
-      : {}),
-  };
+  },
+});
 
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+
+api.interceptors.request.use((config) => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  if (token && config.headers) {
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
+  return config;
+});
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
+api.interceptors.response.use((response) => response, (error) => {
+  if (error.response.status === 401) {
+    toast.error("Error: Unauthorized. Please log in again.");
+    window.location.href = "/login";
+
+
+  }
+  return Promise.reject(error);
+    // You can handle specific status codes here if needed
   });
 
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ message: "Request failed" }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
-  }
 
-  return response.json();
-}
-
-// Auth API
-export const authAPI = {
-  login: (email: string, password: string) =>
-    fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    }).then((res) => res.json()),
-
-  register: (name: string, email: string, password: string) =>
-    fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    }).then((res) => res.json()),
-
-  verify: () => fetchWithAuth("/auth/verify"),
-};
-
-// User API
-export const userAPI = {
-  getProfile: () => fetchWithAuth("/users/profile"),
-
-  updateProfile: (data: { name?: string; email?: string }) =>
-    fetchWithAuth("/users/profile", {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
-
-  getUsers: () => fetchWithAuth("/users"),
-
-  getUserById: (id: string) => fetchWithAuth(`/users/${id}`),
-
-  deleteUser: (id: string) =>
-    fetchWithAuth(`/users/${id}`, {
-      method: "DELETE",
-    }),
-};
-
-// Admin API
-export const adminAPI = {
-  getStats: () => fetchWithAuth("/admin/stats"),
-
-  getUsers: () => fetchWithAuth("/admin/users"),
-
-  deleteUser: (id: string) =>
-    fetchWithAuth(`/admin/users/${id}`, {
-      method: "DELETE",
-    }),
-};
-
-export default {
-  auth: authAPI,
-  user: userAPI,
-  admin: adminAPI,
-};
+export default api;
