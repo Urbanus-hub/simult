@@ -66,9 +66,13 @@ export default function RegisterForm({
     setLoading(true);
 
     try {
-      const user = await register(formData.username, formData.email, formData.password);
+      const user = await register(
+        formData.username,
+        formData.email,
+        formData.password,
+      );
       toast.success("Registration successful!");
-      
+
       if (user.role === "admin") {
         router.replace("/admin");
       } else {

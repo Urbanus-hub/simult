@@ -43,7 +43,7 @@ export function LoginForm({
     try {
       const user = await login(formData.email, formData.password);
       toast.success("Login successful");
-      
+
       if (user.role === "admin") {
         router.replace("/admin");
       } else {
