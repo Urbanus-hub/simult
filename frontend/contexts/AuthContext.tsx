@@ -8,10 +8,11 @@ import {
   ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 
 interface User {
   id: string;
-  name: string;
+  username: string;
   email: string;
   role: string;
 }
@@ -20,7 +21,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -45,65 +46,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/auth/verify", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get("/user/profile");
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
+      if (response.data.success) {
+        setUser(response.data.user);
       } else {
-        // Invalid token, clear it
         removeToken();
+        setUser(null);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
-      removeToken();
+      // Let existing token persist on error unless 401 (handled by interceptor) 
+      // or manually invalidate if needed. 
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await api.post("/user/login", { email, password });
+    const data = response.data;
 
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!data.success) {
       throw new Error(data.message || "Login failed");
     }
 
     setToken(data.token);
     setUser(data.user);
-    router.push("/dashboard");
+    
+    if (data.user.role === "admin") {
+      router.push("/admin");
+    } else {
+      router.push("/user");
+    }
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    const response = await fetch("http://localhost:5000/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email, password }),
-    });
+  const register = async (username: string, email: string, password: string) => {
+    const response = await api.post("/user/register", { username, email, password });
+    const data = response.data;
 
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!data.success) {
       throw new Error(data.message || "Registration failed");
     }
 
     setToken(data.token);
     setUser(data.user);
-    router.push("/onboarding");
+    
+    if (data.user.role === "admin") {
+      router.push("/admin");
+    } else {
+      router.push("/user");
+    }
   };
 
   const logout = () => {
@@ -136,19 +129,16 @@ export function useAuth() {
 // Helper functions for token management
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-
-  const token = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("token="))
-    ?.split("=")[1];
-
-  return token || null;
+  return localStorage.getItem("token");
 }
 
 function setToken(token: string) {
-  document.cookie = `token=${token}; path=/; max-age=604800`; // 7 days
+  if (typeof window === "undefined") return;
+  localStorage.setItem("token", token);
 }
 
 function removeToken() {
-  document.cookie = "token=; path=/; max-age=0";
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 }

@@ -9,13 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import { registerUser } from "@/services/userServices";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const { register } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -65,46 +66,12 @@ export default function RegisterForm({
     setLoading(true);
 
     try {
-      //call register service
-      const response = await registerUser(
-        formData.username,
-        formData.email,
-        formData.password,
-      );
-
-      // Check for token directly on response object
-      if (response.token) {
-        localStorage.setItem("token", response.token);
-      }
-
-      if (response.success) {
-        toast.success(response.message || "Registration successful!");
-        // Store user if provided in registration response
-        if (response.user) {
-          localStorage.setItem("user", JSON.stringify(response.user));
-          if (response.user.role === "admin") {
-            router.replace("/admin");
-          } else {
-            router.replace("/user");
-          }
-        } else {
-          // Fallback if no user object
-          router.replace("/user");
-        }
-      } else if (response.error || response.message) {
-        // Handle case where success is false or error/message is present
-        const errorMsg =
-          response.error || response.message || "Registration failed";
-        toast.error(errorMsg);
-        setError(errorMsg);
-        setLoading(false);
-      }
+      await register(formData.username, formData.email, formData.password);
+      toast.success("Registration successful!");
+      // Redirect is handled by AuthContext
     } catch (err: any) {
       const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        err.message ||
-        "Something went wrong. Please try again.";
+        err.message || "Something went wrong. Please try again.";
       setError(errorMessage);
       toast.error(errorMessage);
       setLoading(false);
