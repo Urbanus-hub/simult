@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 export async function registerUser(
   username: string,
   email: string,
-    password: string,
+  password: string,
 ) {
   const response = await api.post("/user/register", {
     username,
@@ -16,7 +16,7 @@ export async function registerUser(
 
 // user login
 export async function loginUser(email: string, password: string) {
-  const response = await api.post("/user/login", {email, password});
+  const response = await api.post("/user/login", { email, password });
   return response.data;
 }
 // fetch user profile

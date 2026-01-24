@@ -66,9 +66,14 @@ export default function RegisterForm({
     setLoading(true);
 
     try {
-      await register(formData.username, formData.email, formData.password);
+      const user = await register(formData.username, formData.email, formData.password);
       toast.success("Registration successful!");
-      // Redirect is handled by AuthContext
+      
+      if (user.role === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace("/user");
+      }
     } catch (err: any) {
       const errorMessage =
         err.message || "Something went wrong. Please try again.";

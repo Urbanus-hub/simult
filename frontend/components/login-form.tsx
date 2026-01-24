@@ -41,9 +41,14 @@ export function LoginForm({
     setLoading(true);
 
     try {
-      await login(formData.email, formData.password);
+      const user = await login(formData.email, formData.password);
       toast.success("Login successful");
-      // Redirect is handled by AuthContext
+      
+      if (user.role === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace("/user");
+      }
     } catch (err: any) {
       const errorMessage =
         err.message || "Invalid credentials. Please try again.";

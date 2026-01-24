@@ -20,8 +20,12 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (
+    username: string,
+    email: string,
+    password: string,
+  ) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -56,8 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Auth check failed:", error);
-      // Let existing token persist on error unless 401 (handled by interceptor) 
-      // or manually invalidate if needed. 
+      // Let existing token persist on error unless 401 (handled by interceptor)
+      // or manually invalidate if needed.
     } finally {
       setLoading(false);
     }
@@ -73,16 +77,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setToken(data.token);
     setUser(data.user);
-    
-    if (data.user.role === "admin") {
-      router.push("/admin");
-    } else {
-      router.push("/user");
-    }
+    return data.user;
   };
 
-  const register = async (username: string, email: string, password: string) => {
-    const response = await api.post("/user/register", { username, email, password });
+  const register = async (
+    username: string,
+    email: string,
+    password: string,
+  ) => {
+    const response = await api.post("/user/register", {
+      username,
+      email,
+      password,
+    });
     const data = response.data;
 
     if (!data.success) {
@@ -91,12 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setToken(data.token);
     setUser(data.user);
-    
-    if (data.user.role === "admin") {
-      router.push("/admin");
-    } else {
-      router.push("/user");
-    }
+    return data.user;
   };
 
   const logout = () => {
