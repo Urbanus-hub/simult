@@ -16,13 +16,17 @@ function getToken(): string | null {
 async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const token = getToken();
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(typeof options.headers === "object" &&
+    options.headers !== null &&
+    !Array.isArray(options.headers)
+      ? (options.headers as Record<string, string>)
+      : {}),
   };
 
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {

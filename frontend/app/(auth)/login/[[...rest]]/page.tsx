@@ -1,107 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { LoginForm } from "@/components/login-form";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { HiMoon, HiSun } from "react-icons/hi2";
 
-export default function Login() {
-  const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function LoginPage() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [mounted, setMounted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  useEffect(() => {
+    setMounted(true);
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+      .matches
+      ? "dark"
+      : "light";
+    const initialTheme = savedTheme || systemTheme;
 
-    try {
-      await login(formData.email, formData.password);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    setTheme(initialTheme);
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(initialTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(newTheme);
+    localStorage.setItem("theme", newTheme);
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="relative mx-auto w-full max-w-md">
-      <div className="rounded-2xl border border-white/10 bg-white/3 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.4)] backdrop-blur-xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Welcome back</h1>
-          <p className="mt-2 text-sm text-gray-400">
-            Sign in to your account to continue
-          </p>
+    <div className="h-screen w-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-300 overflow-hidden relative">
+      {/* Theme Toggle */}
+      <div className="absolute top-6 right-6 z-50">
+        <button
+          onClick={toggleTheme}
+          className="p-2.5 rounded-full text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === "light" ? (
+            <HiMoon className="h-5 w-5" />
+          ) : (
+            <HiSun className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Main Container - Compact & Centered */}
+      <div className="w-full max-w-[420px] px-6 -mt-12 animate-in fade-in zoom-in-95 duration-500">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <Link href="/" className="group">
+            <div className="w-12 h-12 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xl shadow-md group-hover:scale-105 transition-transform duration-300">
+              S
+            </div>
+          </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
-              {error}
-            </div>
-          )}
+        {/* Form Component */}
+        <LoginForm />
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-300 mb-2"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
-              placeholder="Enter your password"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-sky-500 px-4 py-3 font-medium text-white transition-all hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-400">
-            Don't have an account?{" "}
-            <Link
-              href="/register"
-              className="text-sky-400 hover:text-sky-300 font-medium"
-            >
-              Sign up
-            </Link>
+        {/* Simple Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-zinc-400 dark:text-zinc-600">
+            Secured by Simult
           </p>
         </div>
       </div>
