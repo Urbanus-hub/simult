@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { registerUser } from "@/services/userServices";
 
-export function RegisterForm({
+export default function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -63,14 +65,47 @@ export function RegisterForm({
     setLoading(true);
 
     try {
-      // TODO: Implement actual authentication
-      // Need to call API with: username, email, password
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      //call register service
+      const response = await registerUser(
+        formData.username,
+        formData.email,
+        formData.password,
+      );
 
-      // On success, redirect to login or dashboard
-      router.push("/dashboard");
+      // Check for token directly on response object
+      if (response.token) {
+        localStorage.setItem("token", response.token);
+      }
+
+      if (response.success) {
+        toast.success(response.message || "Registration successful!");
+        // Store user if provided in registration response
+        if (response.user) {
+          localStorage.setItem("user", JSON.stringify(response.user));
+           if (response.user.role === "admin") {
+              router.push("/admin");
+           } else {
+              router.push("/user");
+           }
+        } else {
+           // Fallback if no user object
+           router.push("/user");
+        }
+      } else if (response.error || response.message) {
+        // Handle case where success is false or error/message is present
+        const errorMsg =
+          response.error || response.message || "Registration failed";
+        toast.error(errorMsg);
+        setError(errorMsg);
+      }
     } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
+        "Something went wrong. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

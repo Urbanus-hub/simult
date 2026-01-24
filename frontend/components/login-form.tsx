@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { loginUser } from "@/services/userServices";
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -38,14 +40,43 @@ export function LoginForm({
     setLoading(true);
 
     try {
-      // TODO: Implement actual authentication
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/profile");
+      const response = await loginUser(formData.email, formData.password);
+
+      if (response.success) {
+        toast.success(response.message || "Login successful");
+
+        if (response.token) {
+          localStorage.setItem("token", response.token);
+        }
+
+        // Store user info if needed
+        if (response.user) {
+          localStorage.setItem("user", JSON.stringify(response.user));
+        }
+
+        // Redirect based on role
+        if (response.user?.role === "admin") {
+          router.replace("/admin");
+        } else {
+          router.replace("/user");
+        }
+      } else {
+         const errorMsg = response.message || "Login failed";
+         setError(errorMsg);
+         toast.error(errorMsg);
+         setLoading(false);
+      }
     } catch (err: any) {
-      setError(err.message || "Invalid credentials. Please try again.");
-    } finally {
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
+        "Invalid credentials. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
       setLoading(false);
     }
+    // Remove finally block to prevent state updates during navigation
   };
 
   return (

@@ -2,7 +2,7 @@ import axios from "axios";
 import { toast } from "sonner";
 
 
-const APIURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const APIURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 export const api = axios.create({
   baseURL: APIURL,
   headers: {

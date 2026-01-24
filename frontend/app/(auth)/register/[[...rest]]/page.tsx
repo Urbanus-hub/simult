@@ -1,6 +1,6 @@
 "use client";
 
-import { RegisterForm } from "@/components/register-form";
+import RegisterForm from "@/components/register-form";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HiMoon, HiSun } from "react-icons/hi2";
