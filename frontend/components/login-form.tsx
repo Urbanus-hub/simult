@@ -61,10 +61,10 @@ export function LoginForm({
           router.replace("/user");
         }
       } else {
-         const errorMsg = response.message || "Login failed";
-         setError(errorMsg);
-         toast.error(errorMsg);
-         setLoading(false);
+        const errorMsg = response.message || "Login failed";
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setLoading(false);
       }
     } catch (err: any) {
       const errorMessage =

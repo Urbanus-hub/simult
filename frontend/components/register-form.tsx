@@ -82,14 +82,14 @@ export default function RegisterForm({
         // Store user if provided in registration response
         if (response.user) {
           localStorage.setItem("user", JSON.stringify(response.user));
-           if (response.user.role === "admin") {
-              router.push("/admin");
-           } else {
-              router.push("/user");
-           }
+          if (response.user.role === "admin") {
+            router.replace("/admin");
+          } else {
+            router.replace("/user");
+          }
         } else {
-           // Fallback if no user object
-           router.push("/user");
+          // Fallback if no user object
+          router.replace("/user");
         }
       } else if (response.error || response.message) {
         // Handle case where success is false or error/message is present
@@ -97,6 +97,7 @@ export default function RegisterForm({
           response.error || response.message || "Registration failed";
         toast.error(errorMsg);
         setError(errorMsg);
+        setLoading(false);
       }
     } catch (err: any) {
       const errorMessage =
@@ -106,7 +107,6 @@ export default function RegisterForm({
         "Something went wrong. Please try again.";
       setError(errorMessage);
       toast.error(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
