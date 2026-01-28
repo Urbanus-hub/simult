@@ -1,28 +1,23 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
-  IconCamera,
   IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
   IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
   IconSettings,
   IconUsers,
-} from "@tabler/icons-react"
+  IconMessage,
+  IconChecklist,
+  IconLayoutKanban,
+  IconBell,
+  IconLogout,
+  IconUser,
+} from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -31,85 +26,64 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+// Static nav data structure generator
+const getNavData = () => ({
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/user",
       icon: IconDashboard,
-    },
-    {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
       isActive: true,
-      url: "#",
+    },
+    {
+      title: "Rooms",
+      url: "/rooms",
+      icon: IconLayoutKanban,
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "My Rooms",
+          url: "/rooms",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "Create Room",
+          url: "/rooms/create",
+        },
+        {
+          title: "Invitations",
+          url: "/rooms/invitations",
         },
       ],
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
+      title: "Messages",
+      url: "/messages",
+      icon: IconMessage,
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "Direct Messages",
+          url: "/messages/dm",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "Room Chats",
+          url: "/messages/rooms",
         },
       ],
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
+      title: "Tasks",
+      url: "/tasks",
+      icon: IconChecklist,
       items: [
         {
-          title: "Active Proposals",
-          url: "#",
+          title: "My Tasks",
+          url: "/tasks",
         },
         {
-          title: "Archived",
-          url: "#",
+          title: "Assigned to Me",
+          url: "/tasks/assigned",
         },
       ],
     },
@@ -117,52 +91,52 @@ const data = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: IconSettings,
+      items: [
+        {
+          title: "Profile",
+          url: "/settings/profile",
+        },
+        {
+          title: "Preferences",
+          url: "/settings/preferences",
+        },
+      ],
     },
     {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
+      title: "Notifications",
+      url: "/notifications",
+      icon: IconBell,
     },
   ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
-}
+});
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
+  const data = getNavData();
+
+  // Transform auth user to sidebar user format
+  const sidebarUser = {
+    name: user?.displayName || user?.username || "Guest",
+    email: user?.email || "",
+    avatar: user?.avatar === "/" ? "" : user?.avatar || "",
+  };
+
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/user">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <IconUsers className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Simult</span>
+                  <span className="truncate text-xs">Collaboration</span>
+                </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -170,12 +144,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={sidebarUser} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

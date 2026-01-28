@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface ISession extends Document {
   user: mongoose.Types.ObjectId;
@@ -20,40 +20,39 @@ const sessionSchema = new Schema<ISession>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+      ref: "User",
+      required: true,
     },
     socketId: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     deviceInfo: {
       userAgent: String,
       platform: String,
-      browser: String
+      browser: String,
     },
     ipAddress: String,
     location: String,
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
     },
     lastPing: {
       type: Date,
-      default: Date.now
+      default: Date.now,
     },
-    disconnectedAt: Date
+    disconnectedAt: Date,
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
 sessionSchema.index({ user: 1, isActive: 1 });
-sessionSchema.index({ socketId: 1 }, { unique: true });
 
 export const Session: Model<ISession> = mongoose.model<ISession>(
-  'Session',
-  sessionSchema
+  "Session",
+  sessionSchema,
 );
