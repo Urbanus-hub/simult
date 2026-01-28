@@ -1,3 +1,5 @@
+
+
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -26,6 +28,7 @@ api.interceptors.response.use(
       error.response?.status === 401 &&
       !error.config.url.includes("/login")
     ) {
+      console.warn("Session expired or invalid token - Redirecting to login");
       toast.error("Session expired. Please log in again.");
       if (
         typeof window !== "undefined" &&

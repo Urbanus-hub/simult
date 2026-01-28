@@ -50,13 +50,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const response = await api.get("/user/profile");
+      // Add timestamp to prevent caching issues (304 Not Modified)
+      const response = await api.get(`/user/profile?t=${Date.now()}`);
 
-      if (response.data.success) {
+      // Verify we have a valid user object
+      if (response.data && response.data.success && response.data.user) {
         setUser(response.data.user);
       } else {
-        removeToken();
-        setUser(null);
+        console.warn(
+          "Auth check failed: Invalid response format",
+          response.data,
+        );
+        // Only logout if we're sure it failed, but not on 304 (which axios handles, but just in case)
+        if (response.status !== 304) {
+          removeToken();
+          setUser(null);
+        }
       }
     } catch (error) {
       console.error("Auth check failed:", error);
@@ -137,10 +146,13 @@ function getToken(): string | null {
 function setToken(token: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem("token", token);
+  // Also set cookie for middleware compatibility
+  document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
 }
 
 function removeToken() {
   if (typeof window === "undefined") return;
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  document.cookie = "token=; path=/; max-age=0";
 }

@@ -23,8 +23,11 @@ interface LoginBody {
 
 // Generate JWT Token
 const generateToken = (userId: string): string => {
-  
-  return jwt.sign({ id: userId }, env.JWT_SECRET as string, {expiresIn: env.JWT_EXPIRE} as SignOptions);
+  return jwt.sign(
+    { id: userId },
+    env.JWT_SECRET as string,
+    { expiresIn: env.JWT_EXPIRE } as SignOptions,
+  );
 };
 
 // REGISTER
@@ -124,7 +127,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         username: user.username,
         email: user.email,
         displayName: user.displayName,
-        role:user.role,
+        role: user.role,
         avatar: user.avatar,
         status: user.status,
       },
@@ -138,15 +141,22 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 const getProfile = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const user = await User.findById(req.user?.id);
 
     if (!user) {
       throw new AppError("User not found", 404);
-   
     }
+
+    // Disable caching to prevent 304 issues on frontend
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     res.status(200).json({
       success: true,
@@ -155,7 +165,7 @@ const getProfile = async (
         username: user.username,
         email: user.email,
         displayName: user.displayName,
-        role:user.role,
+        role: user.role,
         avatar: user.avatar,
         bio: user.bio,
         status: user.status,
@@ -171,7 +181,7 @@ const getProfile = async (
 const updateProfile = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { displayName, bio, avatar, customStatus } = req.body;
@@ -184,7 +194,7 @@ const updateProfile = async (
         ...(avatar && { avatar }),
         ...(customStatus !== undefined && { customStatus }),
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!user) {
@@ -201,7 +211,7 @@ const updateProfile = async (
         username: user.username,
         email: user.email,
         displayName: user.displayName,
-        role:user.role,
+        role: user.role,
         avatar: user.avatar,
         bio: user.bio,
         customStatus: user.customStatus,
@@ -218,7 +228,7 @@ const logout = async (req: AuthRequest, res: Response, next: NextFunction) => {
     const user = await User.findByIdAndUpdate(
       req.user?.id,
       { status: "offline", lastActive: new Date() },
-      { new: true }
+      { new: true },
     );
 
     if (!user) {
@@ -240,7 +250,7 @@ const logout = async (req: AuthRequest, res: Response, next: NextFunction) => {
 const deleteAccount = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { password } = req.body;
@@ -280,7 +290,7 @@ const deleteAccount = async (
 const verifyToken = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const user = await User.findById(req.user?.id);

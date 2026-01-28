@@ -4,10 +4,14 @@ import RegisterForm from "@/components/register-form";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HiMoon, HiSun } from "react-icons/hi2";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [mounted, setMounted] = useState(false);
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -23,6 +27,17 @@ export default function RegisterPage() {
     document.documentElement.classList.add(initialTheme);
   }, []);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.role === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace("/user");
+      }
+    }
+  }, [user, loading, router]);
+
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
@@ -31,7 +46,7 @@ export default function RegisterPage() {
     localStorage.setItem("theme", newTheme);
   };
 
-  if (!mounted) return null;
+  if (!mounted || (loading && user)) return null;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-300 relative py-12">
