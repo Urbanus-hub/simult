@@ -42,7 +42,9 @@ export function LoginForm({
 
     try {
       const user = await login(formData.email, formData.password);
-      toast.success("Login successful");
+      toast.success("Login successful", {
+        description: "Welcome back!",
+      });
 
       if (user.role === "admin") {
         router.replace("/admin");
@@ -51,7 +53,12 @@ export function LoginForm({
       }
     } catch (err: any) {
       const errorMessage =
-        err.message || "Invalid credentials. Please try again.";
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (err.message && !err.message.includes("status code")
+          ? err.message
+          : "Invalid credentials. Please try again.");
+
       setError(errorMessage);
       toast.error(errorMessage);
       setLoading(false);

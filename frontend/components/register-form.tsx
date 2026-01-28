@@ -71,7 +71,9 @@ export default function RegisterForm({
         formData.email,
         formData.password,
       );
-      toast.success("Registration successful!");
+      toast.success("Account created successfully", {
+        description: "Welcome to Simult!",
+      });
 
       if (user.role === "admin") {
         router.replace("/admin");
@@ -80,7 +82,11 @@ export default function RegisterForm({
       }
     } catch (err: any) {
       const errorMessage =
-        err.message || "Something went wrong. Please try again.";
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (err.message && !err.message.includes("status code")
+          ? err.message
+          : "Something went wrong. Please try again.");
       setError(errorMessage);
       toast.error(errorMessage);
       setLoading(false);

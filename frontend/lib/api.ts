@@ -20,15 +20,15 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use((response) => response, (error) => {
-  if (error.response.status === 401) {
-    toast.error("Error: Unauthorized. Please log in again.");
-    window.location.href = "/login";
-
-
+  // Don't intercept 401s for login requests - let the component handle invalid credentials
+  if (error.response?.status === 401 && !error.config.url.includes('/login')) {
+    toast.error("Session expired. Please log in again.");
+    if (typeof window !== "undefined" && !window.location.pathname.includes('/login')) {
+        window.location.href = "/login";
+    }
   }
   return Promise.reject(error);
-    // You can handle specific status codes here if needed
-  });
+});
 
 
 export default api;
