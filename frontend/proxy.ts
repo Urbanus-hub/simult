@@ -30,7 +30,8 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // If has token and trying to access auth pages, redirect to profile
+  // If has token and trying to access auth pages, let the client handle the redirect
+  // based on the user role (admin vs user)
   if (
     token &&
     (pathname === "/login" ||
@@ -38,8 +39,8 @@ export default function middleware(request: NextRequest) {
       pathname === "/register" ||
       pathname.startsWith("/register/"))
   ) {
-    const profileUrl = new URL("/profile", request.url);
-    return NextResponse.redirect(profileUrl);
+    // Rely on client-side redirection in the auth pages
+    return NextResponse.next();
   }
 
   return NextResponse.next();
