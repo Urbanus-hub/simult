@@ -75,10 +75,11 @@ export default function RegisterForm({
         description: "Welcome to Simult!",
       });
 
+      // Use window.location.href to ensure a fresh state for the dashboard
       if (user.role === "admin") {
-        router.replace("/admin");
+        window.location.href = "/admin";
       } else {
-        router.replace("/user");
+        window.location.href = "/user";
       }
     } catch (err: any) {
       const errorMessage =

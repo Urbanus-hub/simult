@@ -46,10 +46,11 @@ export function LoginForm({
         description: "Welcome back!",
       });
 
+      // Use window.location.href to ensure a fresh state for the dashboard
       if (user.role === "admin") {
-        router.replace("/admin");
+        window.location.href = "/admin";
       } else {
-        router.replace("/user");
+        window.location.href = "/user";
       }
     } catch (err: any) {
       const errorMessage =
