@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
+import * as React from "react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -12,60 +12,59 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { searchUsers } from "@/services/userServices"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "@/components/ui/popover";
+import { searchUsers } from "@/services/userServices";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface User {
-  id: string
-  username: string
-  displayName: string
-  email: string
-  avatar?: string
+  id: string;
+  username: string;
+  displayName: string;
+  email: string;
+  avatar?: string;
 }
 
 interface UserSearchProps {
-  onSelect: (user: User) => void
-  selectedUser?: User | null
+  onSelect: (user: User) => void;
+  selectedUser?: User | null;
 }
 
 export function UserSearch({ onSelect }: UserSearchProps) {
-  const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState("")
-  const [users, setUsers] = React.useState<User[]>([])
-  const [loading, setLoading] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
+  const [value, setValue] = React.useState("");
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [loading, setLoading] = React.useState(false);
 
   const handleSearch = React.useCallback(async (query: string) => {
-      if (!query) {
-          setUsers([])
-          return
+    if (!query) {
+      setUsers([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await searchUsers(query);
+      if (res.success) {
+        setUsers(res.users);
       }
-      setLoading(true)
-      try {
-          const res = await searchUsers(query)
-          if (res.success) {
-              setUsers(res.users)
-          }
-      } catch (error) {
-          console.error("Search failed", error)
-      } finally {
-          setLoading(false)
-      }
-  }, [])
+    } catch (error) {
+      console.error("Search failed", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Debounce search
   React.useEffect(() => {
-      const timer = setTimeout(() => {
-          if (value) handleSearch(value)
-      }, 300)
-      return () => clearTimeout(timer)
-  }, [value, handleSearch])
-
+    const timer = setTimeout(() => {
+      if (value) handleSearch(value);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [value, handleSearch]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -82,15 +81,19 @@ export function UserSearch({ onSelect }: UserSearchProps) {
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0">
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder="Search username or email..." 
+          <CommandInput
+            placeholder="Search username or email..."
             value={value}
             onValueChange={setValue}
           />
           <CommandList>
-            {loading && <div className="p-4 text-center text-sm text-muted-foreground"><Loader2 className="animate-spin h-4 w-4 mx-auto" /></div>}
+            {loading && (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                <Loader2 className="animate-spin h-4 w-4 mx-auto" />
+              </div>
+            )}
             {!loading && users.length === 0 && value && (
-                <CommandEmpty>No user found.</CommandEmpty>
+              <CommandEmpty>No user found.</CommandEmpty>
             )}
             <CommandGroup>
               {users.map((user) => (
@@ -98,24 +101,30 @@ export function UserSearch({ onSelect }: UserSearchProps) {
                   key={user.id}
                   value={user.id}
                   onSelect={() => {
-                    onSelect(user)
-                    setOpen(false)
+                    onSelect(user);
+                    setOpen(false);
                   }}
                 >
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={user.avatar} />
+                      <AvatarFallback>
+                        {user.username[0].toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                        <span className="font-medium">{user.displayName || user.username}</span>
-                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      <span className="font-medium">
+                        {user.displayName || user.username}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {user.email}
+                      </span>
                     </div>
                   </div>
                   <Check
                     className={cn(
                       "ml-auto h-4 w-4",
-                      "opacity-0" // We don't really persist selection state in the list here
+                      "opacity-0", // We don't really persist selection state in the list here
                     )}
                   />
                 </CommandItem>
@@ -125,5 +134,5 @@ export function UserSearch({ onSelect }: UserSearchProps) {
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
