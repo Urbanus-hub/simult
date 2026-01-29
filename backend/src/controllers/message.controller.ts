@@ -11,7 +11,7 @@ import mongoose from "mongoose";
 export const getRoomMessages = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { roomId } = req.params;
@@ -28,13 +28,13 @@ export const getRoomMessages = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -73,7 +73,7 @@ export const getRoomMessages = async (
 export const sendRoomMessage = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { roomId } = req.params;
@@ -94,13 +94,13 @@ export const sendRoomMessage = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -129,7 +129,7 @@ export const sendRoomMessage = async (
     // Emit socket event
     const io = (req.app.get("io") as any) || (global as any).io;
     if (io) {
-        io.to(roomId).emit("receive_message", message);
+      io.to(roomId).emit("receive_message", message);
     }
 
     logger.success(`Room message sent in room ${roomId}`);
@@ -147,7 +147,7 @@ export const sendRoomMessage = async (
 export const getDirectMessages = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { userId } = req.params;
@@ -202,7 +202,7 @@ export const getDirectMessages = async (
 export const sendDirectMessage = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { userId } = req.params;
@@ -246,12 +246,12 @@ export const sendDirectMessage = async (
     }
 
     // Emit socket event to both sender and recipient
-    const io = (req.app.get("io") as any);
+    const io = req.app.get("io") as any;
     if (io) {
-        // Emit to recipient's personal room (userId)
-        io.to(userId).emit("receive_message", message);
-        // Emit to sender's personal room (userId) so they see it too via socket
-        io.to(req.user?.id).emit("receive_message", message);
+      // Emit to recipient's personal room (userId)
+      io.to(userId).emit("receive_message", message);
+      // Emit to sender's personal room (userId) so they see it too via socket
+      io.to(req.user?.id).emit("receive_message", message);
     }
 
     logger.success(`Direct message sent from ${req.user?.id} to ${userId}`);
@@ -269,7 +269,7 @@ export const sendDirectMessage = async (
 export const editMessage = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -324,7 +324,7 @@ export const editMessage = async (
 export const deleteMessage = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -352,7 +352,7 @@ export const deleteMessage = async (
     if (!canDelete) {
       throw new AppError(
         "You don't have permission to delete this message",
-        403
+        403,
       );
     }
 
@@ -378,7 +378,7 @@ export const deleteMessage = async (
 export const markMessageAsRead = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -395,7 +395,7 @@ export const markMessageAsRead = async (
 
     // Check if already marked as read by this user
     const alreadyRead = message.readBy.some(
-      (read: any) => read.user.toString() === req.user?.id
+      (read: any) => read.user.toString() === req.user?.id,
     );
 
     if (alreadyRead) {
@@ -426,7 +426,7 @@ export const markMessageAsRead = async (
 export const addReaction = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -452,7 +452,7 @@ export const addReaction = async (
     if (existingReaction) {
       // Check if user already reacted
       const userReacted = existingReaction.users.some(
-        (userId) => userId.toString() === req.user?.id
+        (userId) => userId.toString() === req.user?.id,
       );
 
       if (userReacted) {
@@ -487,7 +487,7 @@ export const addReaction = async (
 export const removeReaction = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -518,7 +518,7 @@ export const removeReaction = async (
 
     // Remove user from reaction
     const userIndex = reaction.users.findIndex(
-      (userId) => userId.toString() === req.user?.id
+      (userId) => userId.toString() === req.user?.id,
     );
 
     if (userIndex === -1) {
@@ -550,7 +550,7 @@ export const removeReaction = async (
 export const getConversations = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     // Get all unique users the current user has messaged with
@@ -583,17 +583,11 @@ export const getConversations = async (
                 {
                   $and: [
                     {
-                      $eq: [
-                        "$recipient",
-                        req.user?.id as any,
-                      ],
+                      $eq: ["$recipient", req.user?.id as any],
                     },
                     {
                       $not: {
-                        $in: [
-                          req.user?.id as any,
-                          "$readBy.user",
-                        ],
+                        $in: [req.user?.id as any, "$readBy.user"],
                       },
                     },
                   ],

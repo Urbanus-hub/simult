@@ -95,7 +95,14 @@ export default function RoomsPage() {
             </div>
           </CardFooter>
           <div className="px-6 pb-4">
-              <InviteDialog roomId="mock-id" trigger={<Button variant="outline" size="sm" className="w-full">Invite Members</Button>} />
+            <InviteDialog
+              roomId="mock-id"
+              trigger={
+                <Button variant="outline" size="sm" className="w-full">
+                  Invite Members
+                </Button>
+              }
+            />
           </div>
         </Card>
 

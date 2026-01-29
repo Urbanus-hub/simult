@@ -19,7 +19,7 @@ const onlineUsers = new Map<string, Set<string>>();
 // Socket authentication middleware
 export const socketAuthMiddleware = async (
   socket: AuthenticatedSocket,
-  next: (err?: Error) => void
+  next: (err?: Error) => void,
 ) => {
   try {
     const token =
@@ -59,7 +59,7 @@ export const setupSocketIO = (io: Server) => {
     const user = socket.user;
 
     logger.success(
-      `User ${user.username} (${userId}) connected - Socket: ${socket.id}`
+      `User ${user.username} (${userId}) connected - Socket: ${socket.id}`,
     );
 
     // Track online user
@@ -205,7 +205,7 @@ export const setupSocketIO = (io: Server) => {
           logger.error(`Error sending room message: ${error.message}`);
           socket.emit("error", { message: "Failed to send message" });
         }
-      }
+      },
     );
 
     // Send direct message
@@ -274,7 +274,7 @@ export const setupSocketIO = (io: Server) => {
           logger.error(`Error sending direct message: ${error.message}`);
           socket.emit("error", { message: "Failed to send message" });
         }
-      }
+      },
     );
 
     // Typing indicator for room
@@ -301,7 +301,7 @@ export const setupSocketIO = (io: Server) => {
             });
           });
         }
-      }
+      },
     );
 
     // ============ TASK EVENTS ============
@@ -324,7 +324,7 @@ export const setupSocketIO = (io: Server) => {
         } catch (error) {
           logger.error(`Error broadcasting task creation: ${error}`);
         }
-      }
+      },
     );
 
     // Task updated
@@ -345,7 +345,7 @@ export const setupSocketIO = (io: Server) => {
         } catch (error) {
           logger.error(`Error broadcasting task update: ${error}`);
         }
-      }
+      },
     );
 
     // Task claimed
@@ -366,7 +366,7 @@ export const setupSocketIO = (io: Server) => {
         } catch (error) {
           logger.error(`Error broadcasting task claim: ${error}`);
         }
-      }
+      },
     );
 
     // Task deleted
@@ -394,7 +394,7 @@ export const setupSocketIO = (io: Server) => {
 
     socket.on("disconnect", async (reason: string) => {
       logger.warn(
-        `User ${userId} disconnected - Socket: ${socket.id}, Reason: ${reason}`
+        `User ${userId} disconnected - Socket: ${socket.id}, Reason: ${reason}`,
       );
 
       // Remove socket from online users
