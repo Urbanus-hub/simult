@@ -6,7 +6,7 @@ import { AppError } from "../middleware/errorHandler";
 export const searchUsers = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { query } = req.query;
@@ -18,29 +18,29 @@ export const searchUsers = async (
     // Search by username or email settings
     // Exclude current user from results if authenticated
     // Limit results to 10
-    
+
     // Using a regex for case-insensitive partial match
-    const searchRegex = new RegExp(query, 'i');
+    const searchRegex = new RegExp(query, "i");
 
     const users = await User.find({
       $or: [
         { username: searchRegex },
         { email: searchRegex },
-        { displayName: searchRegex }
-      ]
+        { displayName: searchRegex },
+      ],
     })
-    .select("id username email displayName avatar")
-    .limit(10);
+      .select("id username email displayName avatar")
+      .limit(10);
 
     res.status(200).json({
       success: true,
-      users: users.map(user => ({
+      users: users.map((user) => ({
         id: user._id,
         username: user.username,
         email: user.email,
         displayName: user.displayName,
-        avatar: user.avatar
-      }))
+        avatar: user.avatar,
+      })),
     });
   } catch (error) {
     next(error);

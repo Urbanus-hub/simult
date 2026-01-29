@@ -27,6 +27,8 @@ export async function fetchUserProfile() {
 
 // search users
 export async function searchUsers(query: string) {
-  const response = await api.get(`/users/search?query=${encodeURIComponent(query)}`);
+  const response = await api.get(
+    `/users/search?query=${encodeURIComponent(query)}`,
+  );
   return response.data;
 }
