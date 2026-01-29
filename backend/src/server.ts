@@ -14,6 +14,7 @@ import roomRoutes from "./routes/room.routes";
 import taskRoutes from "./routes/task.routes";
 import messageRoutes from "./routes/message.routes";
 import invitationRoutes from "./routes/invitation.routes";
+import userRoutes from "./routes/user.routes";
 
 const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api", taskRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/invitations", invitationRoutes);
+app.use("/api", userRoutes);
 
 // Socket.IO setup
 setupSocketIO(io);
