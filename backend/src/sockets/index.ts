@@ -85,6 +85,9 @@ export const setupSocketIO = (io: Server) => {
       socketId: socket.id,
     });
 
+    // Join personal room for DMs and notifications
+    socket.join(userId);
+
     // Broadcast user online status to relevant rooms
     broadcastUserStatus(io, userId, "online");
 

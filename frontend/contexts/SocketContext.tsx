@@ -23,18 +23,22 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (user && !socket) {
-        // Need to ensure we get the token, if useAuth doesn't provide it directly we might need to get it from storage
-        // But for now assuming AuthContext or localStorage has it
-        const storedToken = localStorage.getItem("token"); 
+      // Need to ensure we get the token, if useAuth doesn't provide it directly we might need to get it from storage
+      // But for now assuming AuthContext or localStorage has it
+      const storedToken = localStorage.getItem("token");
 
-        if (!storedToken) return;
+      if (!storedToken) return;
 
-      const newSocket = io(process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000", {
-        auth: {
-          token: storedToken,
+      const newSocket = io(
+        process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+          "http://localhost:5000",
+        {
+          auth: {
+            token: storedToken,
+          },
+          transports: ["websocket"],
         },
-        transports: ["websocket"],
-      });
+      );
 
       newSocket.on("connect", () => {
         console.log("Socket connected");

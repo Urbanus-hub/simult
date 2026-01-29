@@ -1,0 +1,56 @@
+// SEND DIRECT MESSAGE (Fallback REST endpoint)
+export const sendDirectMessage = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { content, recipient, replyTo } = req.body;
+
+    if (!recipient || !mongoose.isValidObjectId(recipient)) {
+      throw new AppError("Invalid recipient ID", 400);
+    }
+
+    if (!content || content.trim().length === 0) {
+      throw new AppError("Message content is required", 400);
+    }
+
+    // Create message
+    const message = new Message({
+      messageType: "direct",
+      sender: req.user?.id,
+      recipient: recipient,
+      content: content.trim(),
+      contentType: "text",
+      replyTo: replyTo || undefined,
+    });
+
+    await message.save();
+
+    await message.populate("sender", "username displayName avatar");
+    if (message.replyTo) {
+      await message.populate("replyTo", "content sender");
+    }
+
+    // Emit socket event to both sender and recipient
+    const io = (req.app.get("io") as any);
+    if (io) {
+        // We need to find the socket IDs for the recipient
+        // But setups usually use rooms for user IDs for easy DM targeting
+        // Assuming socket.join(userId) happens on connection
+        
+        // Let's ensure sockets join their own userID room in socket/index.ts
+        io.to(recipient).emit("receive_message", message);
+        io.to(req.user?.id).emit("receive_message", message);
+    }
+
+    logger.success(`Direct message sent from ${req.user?.id} to ${recipient}`);
+
+    res.status(201).json({
+      success: true,
+      message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

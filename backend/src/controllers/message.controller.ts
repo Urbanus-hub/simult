@@ -126,6 +126,12 @@ export const sendRoomMessage = async (
       await message.populate("replyTo", "content sender");
     }
 
+    // Emit socket event
+    const io = (req.app.get("io") as any) || (global as any).io;
+    if (io) {
+        io.to(roomId).emit("receive_message", message);
+    }
+
     logger.success(`Room message sent in room ${roomId}`);
 
     res.status(201).json({
@@ -237,6 +243,15 @@ export const sendDirectMessage = async (
     await message.populate("recipient", "username displayName avatar");
     if (message.replyTo) {
       await message.populate("replyTo", "content sender");
+    }
+
+    // Emit socket event to both sender and recipient
+    const io = (req.app.get("io") as any);
+    if (io) {
+        // Emit to recipient's personal room (userId)
+        io.to(userId).emit("receive_message", message);
+        // Emit to sender's personal room (userId) so they see it too via socket
+        io.to(req.user?.id).emit("receive_message", message);
     }
 
     logger.success(`Direct message sent from ${req.user?.id} to ${userId}`);

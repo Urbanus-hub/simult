@@ -47,6 +47,7 @@ app.use("/api", userRoutes);
 
 // Socket.IO setup
 setupSocketIO(io);
+app.set("io", io);
 
 // Error handling
 app.use(errorHandler);

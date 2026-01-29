@@ -27,6 +27,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { InviteDialog } from "@/components/invite-dialog";
 
 export default function RoomsPage() {
   return (
@@ -92,14 +93,10 @@ export default function RoomsPage() {
               </div>
               <span>Active 2m ago</span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="-mr-2 ml-auto h-8 w-8"
-            >
-              <IconLogin className="h-4 w-4" />
-            </Button>
           </CardFooter>
+          <div className="px-6 pb-4">
+              <InviteDialog roomId="mock-id" trigger={<Button variant="outline" size="sm" className="w-full">Invite Members</Button>} />
+          </div>
         </Card>
 
         {/* Mock Room Card 2 */}

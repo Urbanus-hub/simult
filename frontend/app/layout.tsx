@@ -38,9 +38,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <SocketProvider>
-              {children}
-            </SocketProvider>
+            <SocketProvider>{children}</SocketProvider>
           </AuthProvider>
           <Toaster />
         </ThemeProvider>
