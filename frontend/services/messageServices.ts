@@ -5,12 +5,12 @@ export async function getRoomMessages(
   limit = 50,
   before?: string,
 ) {
-  let url = `/messages/room/${roomId}?limit=${limit}`;
+  let url = `/messages/rooms/${roomId}/messages?limit=${limit}`;
   if (before) {
     url += `&before=${before}`;
   }
   const response = await api.get(url);
-  return response.data; // Expecting { success: true, messages: [] }
+  return response.data;
 }
 
 export async function getDirectMessages(
@@ -27,7 +27,19 @@ export async function getDirectMessages(
 }
 
 export async function sendMessage(data: any) {
-  // data = { messageType: 'room'|'direct', room, recipient, content, ... }
-  const response = await api.post("/messages", data);
+  let url = "";
+
+  if (data.messageType === "room" && data.room) {
+    url = `/messages/rooms/${data.room}/messages`;
+  } else if (data.messageType === "direct" && data.recipient) {
+    url = `/messages/direct/${data.recipient}`;
+  } else {
+    throw new Error("Invalid message type or missing data");
+  }
+
+  const response = await api.post(url, {
+    content: data.content,
+    replyTo: data.replyTo,
+  });
   return response.data;
 }

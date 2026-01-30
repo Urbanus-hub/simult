@@ -28,8 +28,40 @@ import {
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { InviteDialog } from "@/components/invite-dialog";
+import { getRooms } from "@/services/roomServices";
+import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+
+interface Room {
+  _id: string;
+  name: string;
+  description?: string;
+  isPrivate: boolean;
+  members: string[]; // IDs
+  maxMembers: number;
+  lastActivity: string;
+}
 
 export default function RoomsPage() {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const res = await getRooms();
+        if (res.success) {
+          setRooms(res.rooms);
+        }
+      } catch (error) {
+        console.error("Failed to fetch rooms", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRooms();
+  }, []);
+
   return (
     <div className="flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
@@ -69,89 +101,77 @@ export default function RoomsPage() {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {/* Mock Room Card 1 */}
-        <Card className="flex flex-col">
-          <CardHeader className="flex-1">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-base">Engineering Team</CardTitle>
-                <CardDescription className="line-clamp-2">
-                  Daily standups and sprint planning for the frontend overhaul.
-                </CardDescription>
-              </div>
-              <Badge variant="outline" className="flex items-center gap-1">
-                <IconLock className="h-3 w-3" />
-                Private
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardFooter className="border-t bg-muted/20 px-6 py-3">
-            <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <IconUsers className="h-3 w-3" />
-                <span>12/50</span>
-              </div>
-              <span>Active 2m ago</span>
-            </div>
-          </CardFooter>
-          <div className="px-6 pb-4">
-            <InviteDialog
-              roomId="mock-id"
-              trigger={
-                <Button variant="outline" size="sm" className="w-full">
-                  Invite Members
-                </Button>
-              }
-            />
+        {loading && (
+          <div className="col-span-full text-center text-muted-foreground p-10">
+            Loading rooms...
           </div>
-        </Card>
+        )}
 
-        {/* Mock Room Card 2 */}
-        <Card className="flex flex-col">
-          <CardHeader className="flex-1">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-base">General Discussion</CardTitle>
-                <CardDescription className="line-clamp-2">
-                  Watercooler chat and random sharing for the whole company.
-                </CardDescription>
-              </div>
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <IconWorld className="h-3 w-3" />
-                Public
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardFooter className="border-t bg-muted/20 px-6 py-3">
-            <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <IconUsers className="h-3 w-3" />
-                <span>128/500</span>
-              </div>
-              <span>Active 1h ago</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="-mr-2 ml-auto h-8 w-8"
-            >
-              <IconLogin className="h-4 w-4" />
-            </Button>
-          </CardFooter>
-        </Card>
+        {!loading && rooms.length === 0 && (
+          <div className="col-span-full text-center py-10">
+            <h3 className="text-lg font-medium">No rooms yet</h3>
+            <p className="text-muted-foreground">
+              Create your first room to get started.
+            </p>
+          </div>
+        )}
 
-        {/* Mock Room Card 3 */}
-        <Card className="flex flex-col border-dashed shadow-none">
-          <Link
-            href="/rooms/create"
-            className="flex h-full flex-col items-center justify-center p-6 text-muted-foreground hover:text-foreground"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-              <IconPlus className="h-5 w-5" />
+        {rooms.map((room) => (
+          <Card key={room._id} className="flex flex-col">
+            <CardHeader className="flex-1">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-base truncate">
+                    {room.name}
+                  </CardTitle>
+                  <CardDescription className="line-clamp-2">
+                    {room.description || "No description provided."}
+                  </CardDescription>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1 shrink-0"
+                >
+                  {room.isPrivate ? (
+                    <IconLock className="h-3 w-3" />
+                  ) : (
+                    <IconWorld className="h-3 w-3" />
+                  )}
+                  {room.isPrivate ? "Private" : "Public"}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardFooter className="border-t bg-muted/20 px-6 py-3">
+              <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <IconUsers className="h-3 w-3" />
+                  <span>
+                    {room.members.length}/{room.maxMembers}
+                  </span>
+                </div>
+                <span>
+                  Active {formatDistanceToNow(new Date(room.lastActivity))} ago
+                </span>
+              </div>
+            </CardFooter>
+            <div className="px-6 pb-4 flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1" asChild>
+                <Link href={`/messages/rooms?roomId=${room._id}`}>
+                  <IconLogin className="h-4 w-4 mr-2" />
+                  Chat
+                </Link>
+              </Button>
+              <InviteDialog
+                roomId={room._id}
+                trigger={
+                  <Button variant="outline" size="sm" className="flex-1">
+                    Invite
+                  </Button>
+                }
+              />
             </div>
-            <span className="mt-4 text-sm font-medium">Create New Room</span>
-          </Link>
-        </Card>
+          </Card>
+        ))}
       </div>
     </div>
   );

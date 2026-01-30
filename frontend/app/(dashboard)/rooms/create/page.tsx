@@ -23,21 +23,33 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { createRoom } from "@/services/roomServices";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function CreateRoomPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isPrivate, setIsPrivate] = useState("private");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await createRoom({
+        name,
+        description,
+        isPrivate: isPrivate === "private",
+      });
       toast.success("Room created successfully");
       router.push("/rooms");
-    }, 1000);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create room");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -71,22 +83,25 @@ export default function CreateRoomPage() {
                 id="name"
                 placeholder="e.g. Q4 Marketing Sprint"
                 required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <textarea
+              <Textarea
                 id="description"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="What's this room for?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="visibility">Visibility</Label>
-                <Select defaultValue="private">
+                <Select value={isPrivate} onValueChange={setIsPrivate}>
                   <SelectTrigger id="visibility">
                     <SelectValue placeholder="Select visibility" />
                   </SelectTrigger>

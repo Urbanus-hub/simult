@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { getRooms, getRoom } from "@/services/roomServices";
 import { ChatArea } from "@/components/chat-area";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,11 +18,19 @@ interface Room {
 }
 
 export default function RoomChatPage() {
+  const searchParams = useSearchParams();
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [selectedRoomId, setSelectedRoomId] = React.useState<string | null>(
     null,
   );
   const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const roomId = searchParams.get("roomId");
+    if (roomId) {
+      setSelectedRoomId(roomId);
+    }
+  }, [searchParams]);
 
   React.useEffect(() => {
     const fetchRooms = async () => {

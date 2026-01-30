@@ -160,15 +160,21 @@ export function ChatArea({ type, id, name, avatar, status }: ChatAreaProps) {
         ...(type === "room" ? { room: id } : { recipient: id }),
       };
 
-      await sendMessage(payload);
-
-      // Real message will come via socket or we could replace the optimistic one here if backend returned it
-      // Since we have the socket listener, we might get duplicates if we are not careful.
-      // Typically, the socket broadcasts to everyone including sender, or excludes sender.
-      // Let's assume socket broadcasts to room (including sender) usually, but we need to check backend.
+      const res = await sendMessage(payload);
+      if (res.success) {
+        setMessages((prev) => {
+          // Check if real message already exists (from socket)
+          if (prev.some((m) => m._id === res.message._id)) {
+            // Remove optimistic
+            return prev.filter((m) => m._id !== tempId);
+          }
+          // Swap optimistic
+          return prev.map((msg) => (msg._id === tempId ? res.message : msg));
+        });
+      }
     } catch (error) {
       console.error("Failed to send", error);
-      // Remove optimistic message or show error
+      setMessages((prev) => prev.filter((msg) => msg._id !== tempId));
     }
   };
 
