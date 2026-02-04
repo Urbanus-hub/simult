@@ -26,6 +26,11 @@ export async function getDirectMessages(
   return response.data;
 }
 
+export async function getConversations() {
+  const response = await api.get("/messages/conversations");
+  return response.data;
+}
+
 export async function sendMessage(data: any) {
   let url = "";
 

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useEffect } from "react";
 // We need an endpoint to get recent DMs or all users.
 // Assuming we have a recent updates endpoint or we can search users.
 // For now, let's implement a way to start a new chat via search + list active chats (mocked or need API).
@@ -41,30 +42,32 @@ export default function DirectMessagesPage() {
   );
   const [loading, setLoading] = React.useState(false); // Set to true when implementing fetch
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  let selectedUser;
+  let handleStartChat = null;
 
-  // TODO: Implement fetchRecentConversations()
+  useEffect(() => {
+    selectedUser = conversations.find((u) => u._id === selectedUserId);
 
-  const selectedUser = conversations.find((u) => u._id === selectedUserId);
-
-  const handleStartChat = (user: any) => {
-    // user from search is { id, username, email, ... }
-    // map to DMUser
-    const existing = conversations.find((c) => c._id === user.id);
-    if (existing) {
-      setSelectedUserId(existing._id);
-    } else {
-      const newUser: DMUser = {
-        _id: user.id,
-        username: user.username,
-        displayName: user.displayName || user.username,
-        avatar: user.avatar,
-        lastMessage: "New conversation",
-      };
-      setConversations((prev) => [newUser, ...prev]);
-      setSelectedUserId(newUser._id);
-    }
-    setDialogOpen(false);
-  };
+    handleStartChat = (user: any) => {
+      // user from search is { id, username, email, ... }
+      // map to DMUser
+      const existing = conversations.find((c) => c._id === user.id);
+      if (existing) {
+        setSelectedUserId(existing._id);
+      } else {
+        const newUser: DMUser = {
+          _id: user.id,
+          username: user.username,
+          displayName: user.displayName || user.username,
+          avatar: user.avatar,
+          lastMessage: "New conversation",
+        };
+        setConversations((prev) => [newUser, ...prev]);
+        setSelectedUserId(newUser._id);
+      }
+      setDialogOpen(false);
+    };
+  }, []);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden rounded-lg border bg-background shadow-sm">
