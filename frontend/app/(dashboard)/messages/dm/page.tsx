@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageCircle, User, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-// import { getRecentDirectMessages } from "@/services/messageServices" // Need this API
+import { getConversations } from "@/services/messageServices";
 import { UserSearch } from "@/components/user-search";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,34 +40,54 @@ export default function DirectMessagesPage() {
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(
     null,
   );
-  const [loading, setLoading] = React.useState(false); // Set to true when implementing fetch
+  const [loading, setLoading] = React.useState(true); // Set to true when implementing fetch
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  let selectedUser;
-  let handleStartChat = null;
 
   useEffect(() => {
-    selectedUser = conversations.find((u) => u._id === selectedUserId);
-
-    handleStartChat = (user: any) => {
-      // user from search is { id, username, email, ... }
-      // map to DMUser
-      const existing = conversations.find((c) => c._id === user.id);
-      if (existing) {
-        setSelectedUserId(existing._id);
-      } else {
-        const newUser: DMUser = {
-          _id: user.id,
-          username: user.username,
-          displayName: user.displayName || user.username,
-          avatar: user.avatar,
-          lastMessage: "New conversation",
-        };
-        setConversations((prev) => [newUser, ...prev]);
-        setSelectedUserId(newUser._id);
+    async function loadConversations() {
+      try {
+        const data = await getConversations();
+        if (data && data.conversations) {
+          const mapped = data.conversations.map((c: any) => ({
+            _id: c.user._id,
+            username: c.user.username,
+            displayName: c.user.displayName,
+            avatar: c.user.avatar,
+            lastMessage: c.lastMessage?.content || "No messages",
+            // unreadCount: c.unreadCount
+          }));
+          setConversations(mapped);
+        }
+      } catch (error) {
+        console.error("Failed to load conversations", error);
+      } finally {
+        setLoading(false);
       }
-      setDialogOpen(false);
-    };
+    }
+    loadConversations();
   }, []);
+
+  const selectedUser = conversations.find((u) => u._id === selectedUserId);
+
+  const handleStartChat = (user: any) => {
+    // user from search is { id, username, email, ... }
+    // map to DMUser
+    const existing = conversations.find((c) => c._id === user.id);
+    if (existing) {
+      setSelectedUserId(existing._id);
+    } else {
+      const newUser: DMUser = {
+        _id: user.id,
+        username: user.username,
+        displayName: user.displayName || user.username,
+        avatar: user.avatar,
+        lastMessage: "New conversation",
+      };
+      setConversations((prev) => [newUser, ...prev]);
+      setSelectedUserId(newUser._id);
+    }
+    setDialogOpen(false);
+  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden rounded-lg border bg-background shadow-sm">
