@@ -3,6 +3,7 @@ import { Task } from "../models/Task.model";
 import { Room } from "../models/Room.model";
 import { Notification } from "../models/Notification.model";
 import { User } from "../models/User.model";
+import { Message } from "../models/Message.model";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth";
 import { logger } from "../utils/logger";
@@ -12,12 +13,19 @@ import mongoose from "mongoose";
 export const createTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { roomId } = req.params;
-    const { title, description, priority, dueDate, estimatedHours, tags, assignedTo } =
-      req.body;
+    const {
+      title,
+      description,
+      priority,
+      dueDate,
+      estimatedHours,
+      tags,
+      assignedTo,
+    } = req.body;
 
     if (!mongoose.isValidObjectId(roomId)) {
       throw new AppError("Invalid room ID", 400);
@@ -34,13 +42,13 @@ export const createTask = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -51,7 +59,7 @@ export const createTask = async (
       }
 
       const assigneeIsMember = room.members.some(
-        (member) => member.toString() === assignedTo
+        (member) => member.toString() === assignedTo,
       );
 
       if (!assigneeIsMember) {
@@ -86,9 +94,28 @@ export const createTask = async (
     await task.populate("assignedTo", "username displayName avatar");
     await task.populate("room", "name");
 
+    // Get creator info
+    const creator = await User.findById(req.user?.id);
+    const creatorName = creator?.displayName || creator?.username;
+
+    // Create a system message in the room chat
+    const systemMessageContent = assignedTo
+      ? `📋 **${creatorName}** created a new task: **${title}**\n👤 Assigned to: ${(task.assignedTo as any)?.displayName || (task.assignedTo as any)?.username}\n🔥 Priority: ${priority || "medium"}`
+      : `📋 **${creatorName}** created a new task: **${title}**\n✨ Available for anyone to claim\n🔥 Priority: ${priority || "medium"}`;
+
+    const systemMessage = await Message.create({
+      messageType: "room",
+      room: roomId,
+      sender: req.user?.id,
+      content: systemMessageContent,
+      contentType: "system",
+      readBy: [],
+    });
+
+    await systemMessage.populate("sender", "username displayName avatar");
+
     // Create notification if task is assigned to someone
     if (assignedTo && assignedTo !== req.user?.id) {
-      const creator = await User.findById(req.user?.id);
       await Notification.create({
         user: assignedTo,
         type: "task_assigned",
@@ -96,22 +123,31 @@ export const createTask = async (
         room: task.room,
         triggeredBy: req.user?.id,
         title: "New Task Assigned",
-        body: `${creator?.displayName || creator?.username} assigned you "${task.title}" in ${(task.room as any).name}`,
+        body: `${creatorName} assigned you "${task.title}" in ${(task.room as any).name}`,
         actionUrl: `/tasks/${task._id}`,
       });
+    }
 
-      // Emit socket event for real-time notification
-      const io = req.app.get("io");
-      if (io) {
+    // Emit socket events for real-time updates
+    const io = req.app.get("io");
+    if (io) {
+      // Emit task created event to room
+      io.to(`room:${roomId}`).emit("task:created", {
+        task,
+      });
+
+      // Emit new message event to room for system message
+      io.to(`room:${roomId}`).emit("message:new", {
+        message: systemMessage,
+      });
+
+      // Emit notification to assignee if applicable
+      if (assignedTo && assignedTo !== req.user?.id) {
         io.to(`user:${assignedTo}`).emit("notification:new", {
           type: "task_assigned",
           taskId: task._id,
           taskTitle: task.title,
           roomName: (task.room as any).name,
-        });
-        
-        io.to(`room:${roomId}`).emit("task:created", {
-          task,
         });
       }
     }
@@ -132,7 +168,7 @@ export const createTask = async (
 export const getRoomTasks = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { roomId } = req.params;
@@ -149,13 +185,13 @@ export const getRoomTasks = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -205,7 +241,7 @@ export const getRoomTasks = async (
 export const getTaskById = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -231,13 +267,13 @@ export const getTaskById = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -254,7 +290,7 @@ export const getTaskById = async (
 export const updateTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -285,13 +321,13 @@ export const updateTask = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -303,6 +339,7 @@ export const updateTask = async (
     if (estimatedHours !== undefined) task.estimatedHours = estimatedHours;
     if (tags !== undefined) task.tags = tags;
 
+    const oldStatus = task.status;
     if (status !== undefined) {
       task.status = status;
       if (status === "completed") {
@@ -320,6 +357,53 @@ export const updateTask = async (
     await task.populate("createdBy", "username displayName avatar");
     await task.populate("assignedTo", "username displayName avatar");
     await task.populate("watchers", "username displayName avatar");
+    await task.populate("room", "name");
+
+    // Post system message for status changes
+    if (status !== undefined && status !== oldStatus) {
+      const updater = await User.findById(req.user?.id);
+      const updaterName = updater?.displayName || updater?.username;
+
+      let statusEmoji = "📝";
+      let statusMessage = "";
+
+      if (status === "completed") {
+        statusEmoji = "🎉";
+        statusMessage = `**${updaterName}** completed task: **${task.title}**`;
+      } else if (status === "in-progress") {
+        statusEmoji = "🚀";
+        statusMessage = `**${updaterName}** started working on: **${task.title}**`;
+      } else if (status === "review") {
+        statusEmoji = "👀";
+        statusMessage = `**${updaterName}** moved to review: **${task.title}**`;
+      } else {
+        statusEmoji = "📝";
+        statusMessage = `**${updaterName}** updated task status: **${task.title}** → ${status}`;
+      }
+
+      const systemMessage = await Message.create({
+        messageType: "room",
+        room: task.room,
+        sender: req.user?.id,
+        content: `${statusEmoji} ${statusMessage}`,
+        contentType: "system",
+        readBy: [],
+      });
+
+      await systemMessage.populate("sender", "username displayName avatar");
+
+      // Emit socket event for new message
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`room:${task.room}`).emit("message:new", {
+          message: systemMessage,
+        });
+
+        io.to(`room:${task.room}`).emit("task:updated", {
+          task,
+        });
+      }
+    }
 
     logger.success(`Task updated: ${task.title}`);
 
@@ -337,7 +421,7 @@ export const updateTask = async (
 export const deleteTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -364,7 +448,7 @@ export const deleteTask = async (
     if (!isCreator && !isOwner) {
       throw new AppError(
         "Only the task creator or room owner can delete this task",
-        403
+        403,
       );
     }
 
@@ -391,7 +475,7 @@ export const deleteTask = async (
 export const claimTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -413,13 +497,13 @@ export const claimTask = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -464,7 +548,7 @@ export const claimTask = async (
 export const unclaimTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -522,7 +606,7 @@ export const unclaimTask = async (
 export const addComment = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -549,13 +633,13 @@ export const addComment = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -590,7 +674,7 @@ export const addComment = async (
 export const updateChecklist = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -617,13 +701,13 @@ export const updateChecklist = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -631,9 +715,7 @@ export const updateChecklist = async (
     task.checklist = checklist.map((item: any) => ({
       text: item.text,
       completed: item.completed || false,
-      completedBy: item.completed
-        ? req.user?.id as any
-        : undefined,
+      completedBy: item.completed ? (req.user?.id as any) : undefined,
       completedAt: item.completed ? new Date() : undefined,
     }));
 
@@ -655,7 +737,7 @@ export const updateChecklist = async (
 export const addWatcher = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -677,13 +759,13 @@ export const addWatcher = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -714,7 +796,7 @@ export const addWatcher = async (
 export const removeWatcher = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -731,7 +813,7 @@ export const removeWatcher = async (
 
     // Find and remove watcher
     const watcherIndex = task.watchers.findIndex(
-      (watcher) => watcher.toString() === req.user?.id
+      (watcher) => watcher.toString() === req.user?.id,
     );
 
     if (watcherIndex === -1) {
@@ -756,7 +838,7 @@ export const removeWatcher = async (
 export const assignTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -783,19 +865,19 @@ export const assignTask = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
     // Check if assignee is a member of the room
     const assigneeIsMember = room.members.some(
-      (member) => member.toString() === assigneeId
+      (member) => member.toString() === assigneeId,
     );
 
     if (!assigneeIsMember) {
@@ -804,10 +886,7 @@ export const assignTask = async (
 
     // Prevent assigning completed or cancelled tasks
     if (task.status === "completed" || task.status === "cancelled") {
-      throw new AppError(
-        `Cannot assign a ${task.status} task`,
-        400
-      );
+      throw new AppError(`Cannot assign a ${task.status} task`, 400);
     }
 
     // Check if task is already assigned to this user
@@ -839,6 +918,24 @@ export const assignTask = async (
     // Get assignee and assigner details
     const assignee = await User.findById(assigneeId);
     const assigner = await User.findById(req.user?.id);
+    const assignerName = assigner?.displayName || assigner?.username;
+    const assigneeName = assignee?.displayName || assignee?.username;
+
+    // Create system message in room chat
+    const systemMessageContent = previousAssignee
+      ? `🔄 **${assignerName}** reassigned task: **${task.title}**\n👤 New assignee: ${assigneeName}`
+      : `👤 **${assignerName}** assigned task: **${task.title}**\n📌 Assigned to: ${assigneeName}`;
+
+    const systemMessage = await Message.create({
+      messageType: "room",
+      room: task.room,
+      sender: req.user?.id,
+      content: systemMessageContent,
+      contentType: "system",
+      readBy: [],
+    });
+
+    await systemMessage.populate("sender", "username displayName avatar");
 
     // Create notification for the assignee
     await Notification.create({
@@ -848,7 +945,7 @@ export const assignTask = async (
       room: task.room,
       triggeredBy: req.user?.id,
       title: "New Task Assigned",
-      body: `${assigner?.displayName || assigner?.username} assigned you "${task.title}" in ${(task.room as any).name}`,
+      body: `${assignerName} assigned you "${task.title}" in ${(task.room as any).name}`,
       actionUrl: `/tasks/${task._id}`,
     });
 
@@ -861,12 +958,12 @@ export const assignTask = async (
         room: task.room,
         triggeredBy: req.user?.id,
         title: "Task Reassigned",
-        body: `"${task.title}" has been reassigned to ${assignee?.displayName || assignee?.username}`,
+        body: `"${task.title}" has been reassigned to ${assigneeName}`,
         actionUrl: `/tasks/${task._id}`,
       });
     }
 
-    // Emit socket event for real-time update
+    // Emit socket events for real-time update
     const io = req.app.get("io");
     if (io) {
       io.to(`room:${task.room}`).emit("task:assigned", {
@@ -874,7 +971,11 @@ export const assignTask = async (
         assigneeId,
         assignedBy: req.user?.id,
       });
-      
+
+      io.to(`room:${task.room}`).emit("message:new", {
+        message: systemMessage,
+      });
+
       io.to(`user:${assigneeId}`).emit("notification:new", {
         type: "task_assigned",
         taskId: task._id,
@@ -884,7 +985,7 @@ export const assignTask = async (
     }
 
     logger.success(
-      `Task assigned: ${task.title} to user ${assigneeId} by ${req.user?.id}`
+      `Task assigned: ${task.title} to user ${assigneeId} by ${req.user?.id}`,
     );
 
     res.status(200).json({
@@ -901,7 +1002,7 @@ export const assignTask = async (
 export const unassignTask = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -927,13 +1028,13 @@ export const unassignTask = async (
     }
 
     const isMember = room.members.some(
-      (member) => member.toString() === req.user?.id
+      (member) => member.toString() === req.user?.id,
     );
 
     if (!isMember) {
       throw new AppError(
         "Access denied. You are not a member of this room",
-        403
+        403,
       );
     }
 
@@ -944,7 +1045,7 @@ export const unassignTask = async (
     if (!isAssigned && !isCreator) {
       throw new AppError(
         "Only the assigned person or task creator can unassign this task",
-        403
+        403,
       );
     }
 

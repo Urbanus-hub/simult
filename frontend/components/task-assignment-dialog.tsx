@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +23,7 @@ interface User {
   username: string;
   displayName?: string;
   avatar?: string;
-  email: string;
+  email?: string;
   status?: string;
 }
 
@@ -54,8 +61,10 @@ export function TaskAssignmentDialog({
       const filtered = members.filter(
         (member) =>
           member.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          member.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          member.email.toLowerCase().includes(searchQuery.toLowerCase())
+          member.displayName
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          member.email?.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredMembers(filtered);
     } else {
@@ -72,7 +81,9 @@ export function TaskAssignmentDialog({
         setFilteredMembers(response.data.room.members || []);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to load room members");
+      toast.error(
+        error.response?.data?.message || "Failed to load room members",
+      );
     } finally {
       setLoading(false);
     }
@@ -92,7 +103,7 @@ export function TaskAssignmentDialog({
           {
             description: "They'll receive a notification",
             icon: "🎯",
-          }
+          },
         );
         onAssigned?.(assignedMember!);
         onOpenChange(false);
@@ -174,7 +185,9 @@ export function TaskAssignmentDialog({
                 <p className="font-medium text-sm">
                   {currentAssignee.displayName || currentAssignee.username}
                 </p>
-                <p className="text-xs text-muted-foreground">Currently assigned</p>
+                <p className="text-xs text-muted-foreground">
+                  Currently assigned
+                </p>
               </div>
             </div>
             <Button

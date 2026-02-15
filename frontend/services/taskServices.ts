@@ -5,7 +5,13 @@ export interface Task {
   room: string;
   title: string;
   description?: string;
-  status: "available" | "claimed" | "in-progress" | "review" | "completed" | "cancelled";
+  status:
+    | "available"
+    | "claimed"
+    | "in-progress"
+    | "review"
+    | "completed"
+    | "cancelled";
   assignedTo?: {
     _id: string;
     username: string;
@@ -82,7 +88,7 @@ export async function getRoomTasks(
     assignedTo?: string;
     priority?: string;
     sortBy?: string;
-  }
+  },
 ) {
   const params = new URLSearchParams();
   if (filters?.status) params.append("status", filters.status);
@@ -146,7 +152,7 @@ export async function addTaskComment(taskId: string, text: string) {
 // Update checklist
 export async function updateTaskChecklist(
   taskId: string,
-  checklist: Array<{ text: string; completed: boolean }>
+  checklist: Array<{ text: string; completed: boolean }>,
 ) {
   const response = await api.put(`/tasks/${taskId}/checklist`, { checklist });
   return response.data;
