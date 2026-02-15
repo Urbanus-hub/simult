@@ -7,20 +7,42 @@ const createTransporter = () => {
   // For development, use Ethereal Email (testing)
   if (env.NODE_ENV === "development" && !process.env.SMTP_HOST) {
     logger.warn(
-      "No SMTP configuration found. Email functionality disabled in development."
+      "No SMTP configuration found. Email functionality disabled in development.",
     );
     return null;
   }
 
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  try {
+    const config = {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      debug: true, // Enable debug output
+      logger: true, // Log to console
+    };
+
+    logger.info(`Configuring email transporter: ${config.host}:${config.port}`);
+
+    const transporter = nodemailer.createTransport(config);
+
+    // Verify connection configuration
+    transporter.verify((error, success) => {
+      if (error) {
+        logger.error(`Email transporter verification failed: ${error.message}`);
+      } else {
+        logger.success("Email server is ready to send messages");
+      }
+    });
+
+    return transporter;
+  } catch (error) {
+    logger.error(`Failed to create email transporter: ${error}`);
+    return null;
+  }
 };
 
 const transporter = createTransporter();
@@ -30,7 +52,7 @@ const getInvitationEmailHTML = (
   inviterName: string,
   roomName: string,
   invitationLink: string,
-  personalMessage?: string
+  personalMessage?: string,
 ) => {
   return `
     <!DOCTYPE html>
@@ -153,7 +175,7 @@ const getInvitationEmailText = (
   inviterName: string,
   roomName: string,
   invitationLink: string,
-  personalMessage?: string
+  personalMessage?: string,
 ) => {
   return `
 You've been invited to join a room on Simult!
@@ -202,13 +224,13 @@ export const sendInvitationEmail = async ({
         inviterName,
         roomName,
         invitationLink,
-        personalMessage
+        personalMessage,
       ),
       html: getInvitationEmailHTML(
         inviterName,
         roomName,
         invitationLink,
-        personalMessage
+        personalMessage,
       ),
     });
 
@@ -224,7 +246,7 @@ export const sendInvitationEmail = async ({
 export const sendWelcomeEmail = async (to: string, username: string) => {
   if (!transporter) {
     logger.warn(
-      `Email service not configured. Would send welcome email to ${to}`
+      `Email service not configured. Would send welcome email to ${to}`,
     );
     return;
   }
@@ -287,7 +309,7 @@ export const sendWelcomeEmail = async (to: string, username: string) => {
 export const sendPasswordResetEmail = async (to: string, resetLink: string) => {
   if (!transporter) {
     logger.warn(
-      `Email service not configured. Would send password reset to ${to}`
+      `Email service not configured. Would send password reset to ${to}`,
     );
     return;
   }

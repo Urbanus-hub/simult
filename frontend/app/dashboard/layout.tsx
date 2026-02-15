@@ -1,15 +1,16 @@
 "use client";
 
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SocketProvider } from "@/contexts/SocketContext";
 
-export default function AuthLayout({
+export default function DashboardPageLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-background">{children}</div>
+      <SocketProvider>{children}</SocketProvider>
     </AuthProvider>
   );
 }

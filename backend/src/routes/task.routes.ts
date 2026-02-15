@@ -17,6 +17,8 @@ router.delete("/tasks/:id", taskController.deleteTask);
 // Task actions
 router.post("/tasks/:id/claim", taskController.claimTask);
 router.post("/tasks/:id/unclaim", taskController.unclaimTask);
+router.post("/tasks/:id/assign", taskController.assignTask);
+router.post("/tasks/:id/unassign", taskController.unassignTask);
 router.post("/tasks/:id/comments", taskController.addComment);
 router.put("/tasks/:id/checklist", taskController.updateChecklist);
 router.post("/tasks/:id/watch", taskController.addWatcher);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -43,20 +44,25 @@ export function LoginForm({
 
     try {
       const user = await login(formData.email, formData.password);
-      if(!user){
+      if (!user) {
         return;
       }
 
       toast.success("Login successful", {
         description: "Welcome back!",
       });
-      
 
-      // Use window.location.href to ensure a fresh state for the dashboard
-      if (user.role === "admin") {
-        window.location.href = "/admin";
+      // Check for redirect parameter
+      const redirect = searchParams.get("redirect");
+      if (redirect) {
+        window.location.href = redirect;
       } else {
-        window.location.href = "/user";
+        // Use window.location.href to ensure a fresh state for the dashboard
+        if (user.role === "admin") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/user";
+        }
       }
     } catch (err: any) {
       const errorMessage =

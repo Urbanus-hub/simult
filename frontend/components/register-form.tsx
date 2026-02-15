@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export default function RegisterForm({
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -75,11 +76,17 @@ export default function RegisterForm({
         description: "Welcome to Simult!",
       });
 
-      // Use window.location.href to ensure a fresh state for the dashboard
-      if (user.role === "admin") {
-        window.location.href = "/admin";
+      // Check for redirect parameter
+      const redirect = searchParams.get("redirect");
+      if (redirect) {
+        window.location.href = redirect;
       } else {
-        window.location.href = "/user";
+        // Use window.location.href to ensure a fresh state for the dashboard
+        if (user.role === "admin") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/user";
+        }
       }
     } catch (err: any) {
       const errorMessage =

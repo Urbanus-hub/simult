@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { Task } from "../models/Task.model";
 import { Room } from "../models/Room.model";
+import { Notification } from "../models/Notification.model";
+import { User } from "../models/User.model";
 import { AppError } from "../middleware/errorHandler";
 import { AuthRequest } from "../middleware/auth";
 import { logger } from "../utils/logger";
@@ -14,7 +16,7 @@ export const createTask = async (
 ) => {
   try {
     const { roomId } = req.params;
-    const { title, description, priority, dueDate, estimatedHours, tags } =
+    const { title, description, priority, dueDate, estimatedHours, tags, assignedTo } =
       req.body;
 
     if (!mongoose.isValidObjectId(roomId)) {
@@ -42,18 +44,35 @@ export const createTask = async (
       );
     }
 
+    // Validate assignedTo if provided
+    if (assignedTo) {
+      if (!mongoose.isValidObjectId(assignedTo)) {
+        throw new AppError("Invalid assignee ID", 400);
+      }
+
+      const assigneeIsMember = room.members.some(
+        (member) => member.toString() === assignedTo
+      );
+
+      if (!assigneeIsMember) {
+        throw new AppError("Assignee is not a member of this room", 400);
+      }
+    }
+
     // Create task
     const task = new Task({
       room: roomId,
       title,
       description,
-      status: "available",
+      status: assignedTo ? "claimed" : "available",
       priority: priority || "medium",
       createdBy: req.user?.id,
+      assignedTo: assignedTo || undefined,
+      claimedAt: assignedTo ? new Date() : undefined,
       dueDate,
       estimatedHours,
       tags: tags || [],
-      watchers: [req.user?.id],
+      watchers: assignedTo ? [req.user?.id, assignedTo] : [req.user?.id],
     });
 
     await task.save();
@@ -65,6 +84,37 @@ export const createTask = async (
 
     await task.populate("createdBy", "username displayName avatar");
     await task.populate("assignedTo", "username displayName avatar");
+    await task.populate("room", "name");
+
+    // Create notification if task is assigned to someone
+    if (assignedTo && assignedTo !== req.user?.id) {
+      const creator = await User.findById(req.user?.id);
+      await Notification.create({
+        user: assignedTo,
+        type: "task_assigned",
+        task: task._id,
+        room: task.room,
+        triggeredBy: req.user?.id,
+        title: "New Task Assigned",
+        body: `${creator?.displayName || creator?.username} assigned you "${task.title}" in ${(task.room as any).name}`,
+        actionUrl: `/tasks/${task._id}`,
+      });
+
+      // Emit socket event for real-time notification
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`user:${assignedTo}`).emit("notification:new", {
+          type: "task_assigned",
+          taskId: task._id,
+          taskTitle: task.title,
+          roomName: (task.room as any).name,
+        });
+        
+        io.to(`room:${roomId}`).emit("task:created", {
+          task,
+        });
+      }
+    }
 
     logger.success(`Task created: ${title} in room ${roomId}`);
 
@@ -696,6 +746,252 @@ export const removeWatcher = async (
     res.status(200).json({
       success: true,
       message: "Removed as watcher successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ASSIGN TASK
+export const assignTask = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const { assigneeId } = req.body;
+
+    if (!mongoose.isValidObjectId(id)) {
+      throw new AppError("Invalid task ID", 400);
+    }
+
+    if (!mongoose.isValidObjectId(assigneeId)) {
+      throw new AppError("Invalid assignee ID", 400);
+    }
+
+    const task = await Task.findById(id);
+
+    if (!task) {
+      throw new AppError("Task not found", 404);
+    }
+
+    // Check if user is a member of the room
+    const room = await Room.findById(task.room);
+    if (!room) {
+      throw new AppError("Room not found", 404);
+    }
+
+    const isMember = room.members.some(
+      (member) => member.toString() === req.user?.id
+    );
+
+    if (!isMember) {
+      throw new AppError(
+        "Access denied. You are not a member of this room",
+        403
+      );
+    }
+
+    // Check if assignee is a member of the room
+    const assigneeIsMember = room.members.some(
+      (member) => member.toString() === assigneeId
+    );
+
+    if (!assigneeIsMember) {
+      throw new AppError("Assignee is not a member of this room", 400);
+    }
+
+    // Prevent assigning completed or cancelled tasks
+    if (task.status === "completed" || task.status === "cancelled") {
+      throw new AppError(
+        `Cannot assign a ${task.status} task`,
+        400
+      );
+    }
+
+    // Check if task is already assigned to this user
+    if (task.assignedTo && task.assignedTo.toString() === assigneeId) {
+      throw new AppError("Task is already assigned to this user", 400);
+    }
+
+    const previousAssignee = task.assignedTo;
+
+    // Assign task
+    task.assignedTo = assigneeId as any;
+    if (task.status === "available") {
+      task.status = "claimed";
+      task.claimedAt = new Date();
+    }
+
+    // Add assignee to watchers if not already watching
+    if (!task.watchers.some((w) => w.toString() === assigneeId)) {
+      task.watchers.push(assigneeId as any);
+    }
+
+    await task.save();
+
+    await task.populate("createdBy", "username displayName avatar");
+    await task.populate("assignedTo", "username displayName avatar");
+    await task.populate("watchers", "username displayName avatar");
+    await task.populate("room", "name");
+
+    // Get assignee and assigner details
+    const assignee = await User.findById(assigneeId);
+    const assigner = await User.findById(req.user?.id);
+
+    // Create notification for the assignee
+    await Notification.create({
+      user: assigneeId,
+      type: "task_assigned",
+      task: task._id,
+      room: task.room,
+      triggeredBy: req.user?.id,
+      title: "New Task Assigned",
+      body: `${assigner?.displayName || assigner?.username} assigned you "${task.title}" in ${(task.room as any).name}`,
+      actionUrl: `/tasks/${task._id}`,
+    });
+
+    // Notify previous assignee if task was reassigned
+    if (previousAssignee && previousAssignee.toString() !== assigneeId) {
+      await Notification.create({
+        user: previousAssignee,
+        type: "task_assigned",
+        task: task._id,
+        room: task.room,
+        triggeredBy: req.user?.id,
+        title: "Task Reassigned",
+        body: `"${task.title}" has been reassigned to ${assignee?.displayName || assignee?.username}`,
+        actionUrl: `/tasks/${task._id}`,
+      });
+    }
+
+    // Emit socket event for real-time update
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`room:${task.room}`).emit("task:assigned", {
+        task,
+        assigneeId,
+        assignedBy: req.user?.id,
+      });
+      
+      io.to(`user:${assigneeId}`).emit("notification:new", {
+        type: "task_assigned",
+        taskId: task._id,
+        taskTitle: task.title,
+        roomName: (task.room as any).name,
+      });
+    }
+
+    logger.success(
+      `Task assigned: ${task.title} to user ${assigneeId} by ${req.user?.id}`
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Task assigned successfully",
+      task,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// UNASSIGN TASK
+export const unassignTask = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      throw new AppError("Invalid task ID", 400);
+    }
+
+    const task = await Task.findById(id);
+
+    if (!task) {
+      throw new AppError("Task not found", 404);
+    }
+
+    if (!task.assignedTo) {
+      throw new AppError("Task is not assigned to anyone", 400);
+    }
+
+    // Check if user is a member of the room
+    const room = await Room.findById(task.room);
+    if (!room) {
+      throw new AppError("Room not found", 404);
+    }
+
+    const isMember = room.members.some(
+      (member) => member.toString() === req.user?.id
+    );
+
+    if (!isMember) {
+      throw new AppError(
+        "Access denied. You are not a member of this room",
+        403
+      );
+    }
+
+    // Only the assigned person or task creator can unassign
+    const isAssigned = task.assignedTo.toString() === req.user?.id;
+    const isCreator = task.createdBy.toString() === req.user?.id;
+
+    if (!isAssigned && !isCreator) {
+      throw new AppError(
+        "Only the assigned person or task creator can unassign this task",
+        403
+      );
+    }
+
+    const previousAssignee = task.assignedTo;
+
+    // Unassign task
+    task.assignedTo = undefined;
+    task.status = "available";
+    task.claimedAt = undefined;
+
+    await task.save();
+
+    await task.populate("createdBy", "username displayName avatar");
+    await task.populate("watchers", "username displayName avatar");
+    await task.populate("room", "name");
+
+    // Create notification for the previous assignee if unassigned by someone else
+    if (previousAssignee && previousAssignee.toString() !== req.user?.id) {
+      const unassigner = await User.findById(req.user?.id);
+      await Notification.create({
+        user: previousAssignee,
+        type: "task_assigned",
+        task: task._id,
+        room: task.room,
+        triggeredBy: req.user?.id,
+        title: "Task Unassigned",
+        body: `${unassigner?.displayName || unassigner?.username} unassigned you from "${task.title}"`,
+        actionUrl: `/tasks/${task._id}`,
+      });
+    }
+
+    // Emit socket event for real-time update
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`room:${task.room}`).emit("task:unassigned", {
+        taskId: task._id,
+        previousAssignee,
+        unassignedBy: req.user?.id,
+      });
+    }
+
+    logger.success(`Task unassigned: ${task.title}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Task unassigned successfully",
+      task,
     });
   } catch (error) {
     next(error);

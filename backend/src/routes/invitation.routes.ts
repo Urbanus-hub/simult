@@ -8,21 +8,22 @@ const router = Router();
 router.get("/token/:token", invitationController.getInvitationByToken);
 
 // Protected routes
+router.post("/", authenticate, invitationController.sendInvitation); // Root endpoint for sending
 router.post("/send", authenticate, invitationController.sendInvitation);
 router.post(
   "/accept/:token",
   authenticate,
-  invitationController.acceptInvitation
+  invitationController.acceptInvitation,
 );
 router.post(
   "/decline/:token",
   authenticate,
-  invitationController.declineInvitation
+  invitationController.declineInvitation,
 );
 router.get(
   "/pending",
   authenticate,
-  invitationController.getPendingInvitations
+  invitationController.getPendingInvitations,
 );
 router.get("/sent", authenticate, invitationController.getSentInvitations);
 router.delete("/:id", authenticate, invitationController.cancelInvitation);
