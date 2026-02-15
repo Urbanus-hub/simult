@@ -3,22 +3,28 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Users, 
-  Settings, 
-  MessageSquare, 
-  ListTodo, 
-  UserPlus, 
+import {
+  Users,
+  Settings,
+  MessageSquare,
+  ListTodo,
+  UserPlus,
   Calendar,
   Shield,
   Clock,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -72,7 +78,9 @@ export default function RoomDetailPage() {
         setRoom(response.data.room);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to load room details");
+      toast.error(
+        error.response?.data?.message || "Failed to load room details",
+      );
       router.push("/rooms");
     } finally {
       setLoading(false);
@@ -152,13 +160,16 @@ export default function RoomDetailPage() {
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 <span>
-                  Active {formatDistanceToNow(new Date(room.lastActivity), { addSuffix: true })}
+                  Active{" "}
+                  {formatDistanceToNow(new Date(room.lastActivity), {
+                    addSuffix: true,
+                  })}
                 </span>
               </div>
             </div>
           </div>
         </div>
-        
+
         <Button onClick={() => setInviteDialogOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
           Invite Members
@@ -189,7 +200,7 @@ export default function RoomDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{room.taskCount || 0}</div>
-            <Link 
+            <Link
               href={`/rooms/${roomId}/tasks`}
               className="text-xs text-primary hover:underline"
             >
@@ -205,9 +216,7 @@ export default function RoomDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{room.messageCount || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              total messages
-            </p>
+            <p className="text-xs text-muted-foreground">total messages</p>
           </CardContent>
         </Card>
       </div>
@@ -238,7 +247,9 @@ export default function RoomDetailPage() {
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={room.owner.avatar} />
                     <AvatarFallback>
-                      {getInitials(room.owner.displayName || room.owner.username)}
+                      {getInitials(
+                        room.owner.displayName || room.owner.username,
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm">
@@ -250,10 +261,10 @@ export default function RoomDetailPage() {
               <div>
                 <h4 className="text-sm font-medium mb-1">Created</h4>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(room.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                  {new Date(room.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
                   })}
                 </p>
               </div>
@@ -330,7 +341,8 @@ export default function RoomDetailPage() {
               <ListTodo className="h-16 w-16 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Go to Task Board</h3>
               <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
-                Create, assign, and track tasks with your team on the interactive task board.
+                Create, assign, and track tasks with your team on the
+                interactive task board.
               </p>
               <Button asChild size="lg">
                 <Link href={`/rooms/${roomId}/tasks`}>
