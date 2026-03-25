@@ -53,7 +53,7 @@ const getNavData = () => ({
           url: "/rooms/create",
         },
         {
-          title: "Invitations",
+          title: "My Invitations",
           url: "/rooms/invitations",
         },
       ],

@@ -163,7 +163,7 @@ export const getDirectMessages = async (
       throw new AppError("User not found", 404);
     }
 
-    // Build query for messages between two users
+    // Build query for messages between the two users only
     const query: any = {
       messageType: "direct",
       isDeleted: false,
@@ -553,15 +553,19 @@ export const getConversations = async (
   next: NextFunction,
 ) => {
   try {
+    if (!req.user?.id || !mongoose.isValidObjectId(req.user.id)) {
+      throw new AppError("Invalid user id for conversations", 400);
+    }
+
+    // @ts-expect-error Mongoose Types.ObjectId constructor supports string ids at runtime
+    const userObjectId = new mongoose.Types.ObjectId(req.user.id);
+
     // Get all unique users the current user has messaged with
     const conversations = await Message.aggregate([
       {
         $match: {
           messageType: "direct",
-          $or: [
-            { sender: req.user?.id as any },
-            { recipient: req.user?.id as any },
-          ],
+          $or: [{ sender: userObjectId }, { recipient: userObjectId }],
         },
       },
       {
@@ -571,7 +575,7 @@ export const getConversations = async (
         $group: {
           _id: {
             $cond: [
-              { $eq: ["$sender", req.user?.id as any] },
+              { $eq: ["$sender", userObjectId] },
               "$recipient",
               "$sender",
             ],
@@ -583,11 +587,11 @@ export const getConversations = async (
                 {
                   $and: [
                     {
-                      $eq: ["$recipient", req.user?.id as any],
+                      $eq: ["$recipient", userObjectId],
                     },
                     {
                       $not: {
-                        $in: [req.user?.id as any, "$readBy.user"],
+                        $in: [userObjectId, "$readBy.user"],
                       },
                     },
                   ],

@@ -27,7 +27,7 @@ export async function getDirectMessages(
 }
 
 export async function getConversations() {
-  const response = await api.get("/messages/conversations");
+  const response = await api.get(`/messages/conversations`);
   return response.data;
 }
 

@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Mock or Real type
 interface DMUser {
@@ -30,6 +31,7 @@ interface DMUser {
   avatar?: string;
   lastMessage?: string;
   lastActive?: string;
+  lastMessageAt?: string;
 }
 
 export default function DirectMessagesPage() {
@@ -42,21 +44,74 @@ export default function DirectMessagesPage() {
   );
   const [loading, setLoading] = React.useState(true); // Set to true when implementing fetch
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user?.id) return;
+
     async function loadConversations() {
+      setLoading(true);
       try {
         const data = await getConversations();
-        if (data && data.conversations) {
-          const mapped = data.conversations.map((c: any) => ({
-            _id: c.user._id,
-            username: c.user.username,
-            displayName: c.user.displayName,
-            avatar: c.user.avatar,
+        const conversationsFromAgg = data?.conversations as any[] | undefined;
+        const messagesArray = data?.messages as any[] | undefined;
+        const singleMessage = data?.message as any | undefined;
+
+        const toConversation = (msg: any): DMUser | null => {
+          const senderId = msg?.sender?._id;
+          const recipientId = msg?.recipient?._id;
+          if (!senderId || !recipientId) return null;
+
+          const isSelfSender = senderId === user?.id;
+          const other = isSelfSender ? msg.recipient : msg.sender;
+          if (!other?._id) return null;
+
+          return {
+            _id: other._id,
+            username: other.username,
+            displayName: other.displayName || other.username,
+            avatar: other.avatar,
+            lastMessage:
+              msg.content || msg.lastMessage?.content || "No messages",
+            lastMessageAt: msg.createdAt || msg.lastMessage?.createdAt,
+          };
+        };
+
+        if (conversationsFromAgg?.length) {
+          const mapped = conversationsFromAgg.map((c: any) => ({
+            _id: c.user?._id,
+            username: c.user?.username,
+            displayName: c.user?.displayName || c.user?.username,
+            avatar: c.user?.avatar,
             lastMessage: c.lastMessage?.content || "No messages",
-            // unreadCount: c.unreadCount
+            lastMessageAt: c.lastMessage?.createdAt,
           }));
           setConversations(mapped);
+        } else if (messagesArray?.length) {
+          const grouped = new Map<string, DMUser>();
+          messagesArray.forEach((msg) => {
+            const conv = toConversation(msg);
+            if (!conv) return;
+            const current = grouped.get(conv._id);
+            if (
+              !current ||
+              new Date(conv.lastMessageAt || 0) >
+                new Date(current.lastMessageAt || 0)
+            ) {
+              grouped.set(conv._id, conv);
+            }
+          });
+          const mapped = Array.from(grouped.values()).sort(
+            (a, b) =>
+              new Date(b.lastMessageAt || 0).getTime() -
+              new Date(a.lastMessageAt || 0).getTime(),
+          );
+          setConversations(mapped);
+        } else if (singleMessage) {
+          const conv = toConversation(singleMessage);
+          setConversations(conv ? [conv] : []);
+        } else {
+          setConversations([]);
         }
       } catch (error) {
         console.error("Failed to load conversations", error);
@@ -64,8 +119,9 @@ export default function DirectMessagesPage() {
         setLoading(false);
       }
     }
+
     loadConversations();
-  }, []);
+  }, [user?.id]);
 
   const selectedUser = conversations.find((u) => u._id === selectedUserId);
 

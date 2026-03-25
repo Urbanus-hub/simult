@@ -139,7 +139,7 @@ export function LoginForm({
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
-              className="h-10 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-zinc-900 dark:focus-visible:ring-zinc-100 placeholder:text-zinc-400 pr-10"
+              className="h-10 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-lg focus-visible:ring-zinc-900 dark:focus-visible:ring-zinc-100 placeholder:text-zinc-400 pr-10 dark:text-black"
             />
             <Button
               type="button"

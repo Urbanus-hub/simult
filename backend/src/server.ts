@@ -26,7 +26,8 @@ const io = new Server(server, {
 });
 
 // Middleware
-app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+app.use(cors());
+// app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
 app.use(helmet()); // Security headers
 app.use(morgan("dev")); // Logging and monitoring
 app.use(express.json()); // JSON parsing

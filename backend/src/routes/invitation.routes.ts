@@ -20,6 +20,7 @@ router.post(
   authenticate,
   invitationController.declineInvitation,
 );
+
 router.get(
   "/pending",
   authenticate,
